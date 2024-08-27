@@ -1,6 +1,6 @@
 {
   "name": "livesey-database",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "a lightweight module that allows you to work with database queries without using ORM",
   "main": "index.js",
   "type": "module",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "hhuziuk"
+    "url": "git+https://github.com/livesey-finance/livesey-database"
   },
   "keywords": [
     "orm",
@@ -26,8 +26,10 @@
     "eslint-config-google": "^0.14.0"
   },
   "dependencies": {
+    "@t3-oss/env-core": "^0.11.1",
     "dotenv": "^16.4.5",
     "mysql2": "^3.11.0",
-    "pg": "^8.12.0"
+    "pg": "^8.12.0",
+    "zod": "^3.23.8"
   }
 }
