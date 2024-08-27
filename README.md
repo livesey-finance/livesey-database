@@ -1,3 +1,5 @@
+<a name="readme-top"></a>
+
 # livesey-database
 
 ## Overview
@@ -11,14 +13,37 @@ This package provides an abstract database client and a generic database interfa
 - Chainable methods: Build complex queries by chaining method calls.
 - Error handling: Provides meaningful error messages for database operations.
 
-## Installation
+## Table of Contents
+
+- [Getting Started](#getting-started)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Usage](#usage)
+    - [Initialize the Database Client](#1-initialize-the-database-client)
+    - [Create a Database Instance](#2-create-a-database-instance)
+    - [Perform Database Operations](#3-perform-database-operations)
+    - [Close the Database Connection](#4-close-the-database-connection)
+- [API Reference](#api-reference)
+  - [DatabaseClient](#databaseclient)
+  - [MySQLClient](#mysqlclient)
+  - [PostgresClient](#postgresclient)
+  - [Database](#database)
+- [Examples](#examples)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+- [Contact](#contact)
+
+## Getting Started
+
+### Installation
 
 To install the package, use npm:
+
 
 ```bash
 npm install livesey-database
 ```
-
 
 ## Configuration
 
@@ -188,6 +213,12 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 If you have any questions or need further assistance, please open an issue on our GitHub repository or contact the maintainer.
 
+## Contact
+
+For any questions or inquiries, please contact huziukwork@gmail.com.
+
 ---
 
 By following the above documentation, you should be able to easily configure and use the database package in your application.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
