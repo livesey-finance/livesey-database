@@ -1,0 +1,33 @@
+{
+  "name": "livesey-database",
+  "version": "1.0.0",
+  "description": "a lightweight module that allows you to work with database queries without using ORM",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "npx eslint . --fix && node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "hhuziuk"
+  },
+  "keywords": [
+    "orm",
+    "database",
+    "javascript",
+    "postgres",
+    "pg",
+    "mysql"
+  ],
+  "author": "hhuziuk",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^9.9.1",
+    "eslint-config-google": "^0.14.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mysql2": "^3.11.0",
+    "pg": "^8.12.0"
+  }
+}
