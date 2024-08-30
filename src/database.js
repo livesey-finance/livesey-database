@@ -20,6 +20,21 @@ export class Database {
     return this;
   }
 
+  select(fields) {
+    let field = '';
+    if (fields) {
+      const selectedFields = [];
+      for (const key of fields) {
+        selectedFields.push(`"${key}"`);
+      }
+      field = selectedFields.join(', ');
+    } else {
+      field = '*';
+    }
+    this.query += `SELECT ${field} FROM "${this.tableName}"`;
+    return this;
+  }
+
   where(object) {
     if (object) {
       const whereConditions = [];
@@ -77,11 +92,20 @@ export class Database {
     return this;
   }
 
+  clearQuery() {
+    this.query = '';
+    this.whereValues = [];
+  }
+
   async execute() {
     try {
-      return await this.dbClient.query(this.query, this.whereValues);
+      console.log('Executing SQL Query:', this.query);
+      const result = await this.dbClient.query(this.query, this.whereValues);
+      this.clearQuery();
+      return result;
     } catch (error) {
       console.error('Error executing query:', error.message);
+      this.clearQuery();  // Очищення у випадку помилки
       throw new Error(`Database query execution error: ${error.message}`);
     }
   }

@@ -1,17 +1,20 @@
-import { createEnv } from '@t3-oss/env-core';
-import { z } from 'zod';
+import { Strings, Numbers } from 'livesey-validation';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const env = createEnv({
-  server: {
-    DB_TYPE: z.string(),
-    DB_HOST: z.string(),
-    DB_USER: z.string(),
-    DB_PASSWORD: z.string(),
-    DB_NAME: z.string(),
-    DB_PORT: z.string().default('5432'),
-    DB_SSL: z.string().default('true'),
-  },
-  runtimeEnv: process.env,
-});
+export const port = Numbers.parseEnvValue(process.env.PORT).isInt();
+
+export const dbType = Strings.isString(process.env.DB_TYPE);
+export const dbHost = Strings.isString(process.env.DB_HOST);
+export const dbUser = Strings.isString(process.env.DB_USER);
+export const dbPassword = Strings.isString(process.env.DB_PASSWORD);
+export const dbName = Strings.isString(process.env.DB_NAME);
+export const dbPort = Strings.isString(process.env.DB_PORT);
+export const dbSsl = Strings.isString(process.env.DB_SSL);
+
+
+
+
+
+
+
