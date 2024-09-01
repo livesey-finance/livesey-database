@@ -54,11 +54,16 @@ const assetSchema = {
       'droneId': {
         'type': 'uuid',
         'notNull': true,
-        'foreignKey': {
-          'table': 'Drone',
-          'column': 'droneId',
-          'onDelete': 'CASCADE'  // Adding cascade delete
-        }
+        // 'foreignKey': {
+        //   'table': 'Drone',
+        //   'column': 'droneId'
+        // }
+      }
+    },
+    'relations': {
+      'ManyToOne': {
+        'relatedEntity': 'Drone',
+        'foreignKey': 'droneId'
       }
     }
   }
@@ -69,22 +74,22 @@ const runTests = async () => {
   const dbFunction = new DatabaseFunction('Asset', dbClient);
 
   try {
-    // Creating the Drone table
+    // Create Drone table
     await createSchema(dbClient, droneSchema);
     console.log('✔️ Drone table created successfully.');
 
-    // Creating the Asset table
+    // Create Asset table
     await createSchema(dbClient, assetSchema);
     console.log('✔️ Asset table created successfully.');
 
-    // Inserting a record into the Drone table
+    // Insert into Drone table
     await dbClient.query(
       'INSERT INTO "Drone" ("droneId") VALUES ($1) ON CONFLICT DO NOTHING;',
       ['123e4567-e89b-12d3-a456-426614174002']
     );
     console.log('✔️ Insertion into Drone successful.');
 
-    // Inserting a record into the Asset table
+    // Insert into Asset table
     const insertResult = await dbFunction.saveRecord({
       assetPriceId: '123e4567-e89b-12d3-a456-426614174000',
       assetType: 'Shares',
@@ -95,20 +100,20 @@ const runTests = async () => {
       droneId: '123e4567-e89b-12d3-a456-426614174002'
     });
 
-    assert.ok(insertResult); // Check if the insertion was successful
+    assert.ok(insertResult, 'Failed to insert into Asset table.');
     console.log('✔️ Insertion into Asset successful.');
 
-    // Updating a record
+    // Update a record
     const updateResult = await dbFunction.updateRecord(
       { assetPriceId: '123e4567-e89b-12d3-a456-426614174000' },
       { currentPrice: 155.75 }
     );
-    assert.ok(updateResult); // Check if the update was successful
+    assert.ok(updateResult, 'Failed to update Asset record.');
     console.log('✔️ Record update successful.');
 
-    // Deleting a record
+    // Delete a record
     const deleteResult = await dbFunction.deleteRecord({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' });
-    assert.ok(deleteResult); // Check if the deletion was successful
+    assert.ok(deleteResult, 'Failed to delete Asset record.');
     console.log('✔️ Record deletion successful.');
 
   } catch (error) {
@@ -129,4 +134,5 @@ const runTests = async () => {
   }
 };
 
+// Run the tests
 runTests();

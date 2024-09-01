@@ -20,9 +20,10 @@ This package provides an abstract database client and a generic database interfa
   - [Configuration](#configuration)
   - [Usage](#usage)
     - [Initialize the Database Client](#1-initialize-the-database-client)
-    - [Create a Database Instance](#2-create-a-database-instance)
-    - [Perform Database Operations](#3-perform-database-operations)
-    - [Close the Database Connection](#4-close-the-database-connection)
+    - [Schema Creation and Serialization](#2-schema-creation-and-serialization)
+    - [Create a Database Instance](#3-create-a-database-instance)
+    - [Perform Database Operations](#4-perform-database-operations)
+    - [Close the Database Connection](#5-close-the-database-connection)
 - [API Reference](#api-reference)
   - [DatabaseClient](#databaseclient)
   - [MySQLClient](#mysqlclient)
@@ -53,7 +54,7 @@ Before using the package, configure your environment variables in a `.env` file 
 DB_TYPE=mysql # or postgres
 DB_HOST=#your host
 DB_USER=#your username
-DB_PASSWORD=#your  password
+DB_PASSWORD=#your password
 DB_NAME= #your database name
 DB_PORT=3306 # or 5432 for PostgreSQL
 DB_SSL=true # or false for non-SSL connections
@@ -66,23 +67,118 @@ DB_SSL=true # or false for non-SSL connections
 You need to initialize the database client based on the environment configuration (MySQL or PostgreSQL).
 
 ```javascript
-import { MySQLClient } from 'livesey-database';
-import { PostgresClient } from 'livesey-database';
-import { Database } from 'livesey-database';
+import { MySQLClient, PostgresClient, Database } from 'livesey-database';
 
 // Determine the database client type based on the environment configuration
 const dbClient = process.env.DB_TYPE === 'mysql' ? new MySQLClient() : new PostgresClient();
 ```
 
-### 2. Create a Database Instance
+### 2. Schema Creation and Serialization
 
-Once you have a `dbClient`, you can create a `Database` instance for the desired table.
+#### Define and Create Schemas
+
+Define and create table schemas programmatically.
+
+```js
+import { createSchema } from 'livesey-database';
+
+const droneSchema = {
+  'Table': {
+    'tableName': 'Drone',
+    'columns': {
+      'droneId': {
+        'type': 'uuid',
+        'primaryKey': true,
+        'unique': true,
+        'notNull': true
+      }
+    }
+  }
+};
+
+await createSchema(dbClient, droneSchema);
+console.log('Drone table created successfully.');
+```
+
+#### Foreign Keys and Relationships
+
+Define foreign keys and establish relationships between tables.
+
+```js
+const assetSchema = {
+  'Table': {
+    'tableName': 'Asset',
+    'columns': {
+      'assetPriceId': {
+        'type': 'uuid',
+        'primaryKey': true,
+        'unique': true,
+        'notNull': true
+      },
+      'droneId': {
+        'type': 'uuid',
+        'notNull': true
+      }
+    },
+    'relations': {
+      'ManyToOne': {
+        'relatedEntity': 'Drone',
+        'foreignKey': 'droneId'
+      }
+    }
+  }
+};
+
+await createSchema(dbClient, assetSchema);
+console.log('Asset table with foreign key created successfully.');
+```
+
+or
+
+```js
+const assetSchema = {
+  'Table': {
+    'tableName': 'Asset',
+    'columns': {
+      'assetPriceId': {
+        'type': 'uuid',
+        'primaryKey': true,
+        'unique': true,
+        'notNull': true
+      },
+      'droneId': {
+        'type': 'uuid',
+        'notNull': true,
+        'foreignKey': {
+          'table': 'Drone',
+          'column': 'droneId',
+          'onDelete': 'CASCADE'
+        }
+      }
+    },
+    'relations': {
+      'ManyToOne': {
+        'relatedEntity': 'Drone',
+        'foreignKey': 'droneId'
+      }
+    }
+  }
+};
+
+await createSchema(dbClient, assetSchema);
+console.log('Asset table with foreign key created successfully.');
+```
+
+
+### 3. Create a Database Instance
+
+Once you have a dbClient, you can create a Database instance for the desired table.
 
 ```javascript
 const db = new Database('User', dbClient);
 ```
 
-### 3. Perform Database Operations
+### 4. Perform Database Operations
 
 #### Select Queries
 
@@ -137,13 +233,16 @@ await db.delete()
 console.log('User deleted successfully');
 ```
 
-### 4. Close the Database Connection
+### 5. Close the Database Connection
 
 Don't forget to release the database client connection when you are done:
 
 ```javascript
 dbClient.release();
 ```
+
+
+
 
 ## API Reference
 
@@ -197,9 +296,24 @@ A class to build and execute SQL queries for a specific table.
 -  `delete()` : Begins a DELETE SQL query.
 -  `execute()` : Executes the built SQL query.
 
+### `DatabaseFunction`
+
+Extends `Database` to provide higher-level operations such as finding, saving, updating, and deleting records.
+
+#### Methods
+
+-  `findRecord(criteria, selectFields)` : Finds a record matching the criteria.
+-  `saveRecord(data)` : Inserts a new record into the table.
+-  `updateRecord(criteria, updateData)` : Updates a record matching the criteria.
+-  `deleteRecord(criteria)` : Deletes a record matching the criteria.
+
+### `createSchema`
+
+Function to create tables and manage relationships.
+
 ## Examples
 
-Refer to the Usage section above for detailed examples of how to use the package for different types of SQL operations.
+Refer to the Usage and Schema Creation sections above for detailed examples of how to use the package for different types of SQL operations and schema definitions.
 
 ## Contributing
 

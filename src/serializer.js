@@ -1,12 +1,15 @@
 const createTable = (schema) => {
   const jsonString = JSON.stringify(schema);
   const parsedData = JSON.parse(jsonString);
+  const tableName = parsedData.Table.tableName;
+  const columns = parsedData.Table.columns;
+  const relations = parsedData.Table.relations || {};
 
-  let query = `CREATE TABLE IF NOT EXISTS "${parsedData.Table.tableName}" (`;
+  let query = `CREATE TABLE IF NOT EXISTS "${tableName}" (`;
 
   const foreignKeys = [];
 
-  for (const [columnName, columnValue] of Object.entries(parsedData.Table.columns)) {
+  for (const [columnName, columnValue] of Object.entries(columns)) {
     if (!columnValue || typeof columnValue.type !== 'string') {
       throw new Error(`Invalid column definition for column "${columnName}".`);
     }
@@ -45,12 +48,27 @@ const createTable = (schema) => {
     query += ', ';
   }
 
+  // Append foreign keys to the query
   if (foreignKeys.length > 0) {
     query += foreignKeys.join(', ') + ', ';
   }
 
-  query = query.slice(0, -2);
+  query = query.slice(0, -2); // Remove last comma and space
   query += ');';
+
+  // Handle ManyToMany relationships by creating join tables
+  if (relations.ManyToMany) {
+    for (const [relatedEntity, relationParams] of Object.entries(relations.ManyToMany)) {
+      const joinTableName = `${tableName}_${relationParams.relatedEntity}`;
+      query += ` CREATE TABLE IF NOT EXISTS "${joinTableName}" (`;
+      query += `"${tableName}_id" UUID NOT NULL, `;
+      query += `"${relationParams.relatedEntity}_id" UUID NOT NULL, `;
+      query += `PRIMARY KEY ("${tableName}_id", "${relationParams.relatedEntity}_id"), `;
+      query += `FOREIGN KEY ("${tableName}_id") REFERENCES "${tableName}"("id"), `;
+      query += `FOREIGN KEY ("${relationParams.relatedEntity}_id") REFERENCES "${relationParams.relatedEntity}"("id")`;
+      query += ');';
+    }
+  }
 
   return query.trim();
 };
