@@ -309,7 +309,11 @@ Extends `Database` to provide higher-level operations such as finding, saving, u
 
 ### `createSchema`
 
-Function to create tables and manage relationships.
+Creates a table from schema(json object).
+
+#### Methods
+
+-  `createSchema(dbClient, assetSchema)` : Function to create tables and manage relationships.
 
 ## Examples
 
