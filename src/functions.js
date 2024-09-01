@@ -16,7 +16,6 @@ export class DatabaseFunction extends Database {
       const result = await this.execute();
       return result;
     } catch (err) {
-      console.error('Error in find method:', err.message);
       throw err;
     }
   }
@@ -32,7 +31,6 @@ export class DatabaseFunction extends Database {
         .execute();
       return result;
     } catch (err) {
-      console.error('Error in save method:', err.message);
       throw err;
     }
   }
@@ -46,7 +44,6 @@ export class DatabaseFunction extends Database {
         .execute();
       return result;
     } catch (err) {
-      console.error('Error in updateRecord method:', err.message);
       throw err;
     }
   }
@@ -63,9 +60,8 @@ export class DatabaseFunction extends Database {
         throw new Error('Delete operation requires criteria.');
       }
     } catch (err) {
-      console.error('Error in delete method:', err.message);
       throw err;
     }
   }
 
-}
+};

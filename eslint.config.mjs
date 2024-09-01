@@ -86,6 +86,7 @@ export default [
       'no-unmodified-loop-condition': 'error',
       'no-constant-condition': ['error', { 'checkLoops': false }],
       'no-console': 'off',
+      //'no-console': ['error', { allow: ['warn', 'info'] }],
       'no-useless-concat': 'error',
       'no-useless-escape': 'error',
       'no-shadow-restricted-names': 'error',

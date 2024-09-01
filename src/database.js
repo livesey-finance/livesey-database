@@ -9,17 +9,6 @@ export class Database {
     this.whereValues = [];
   }
 
-  select(object) {
-    const fields = object ?
-      Object.keys(object)
-        .filter((key) => object[key])
-        .map((key) => `"${key}"`)
-        .join(', ') :
-      '*';
-    this.query += `SELECT ${fields} FROM "${this.tableName}"`;
-    return this;
-  }
-
   select(fields) {
     let field = '';
     if (fields) {
@@ -58,17 +47,23 @@ export class Database {
   }
 
   insert() {
-    this.query += 'INSERT ';
+    this.query += 'INSERT';
     return this;
   }
 
   into(columns) {
+    if (!Array.isArray(columns) || columns.length === 0) {
+      throw new Error('Columns should be a non-empty array');
+    }
     const formattedColumns = columns.map((col) => `"${col}"`).join(', ');
     this.query += ` INTO "${this.tableName}" (${formattedColumns})`;
     return this;
   }
 
   values(valuesArray) {
+    if (!Array.isArray(valuesArray) || valuesArray.length === 0) {
+      throw new Error('Values should be a non-empty array');
+    }
     const placeholders = valuesArray.map((_, index) => `$${index + 1}`).join(', ');
     this.query += ` VALUES (${placeholders})`;
     this.whereValues = this.whereValues.concat(valuesArray);
@@ -99,13 +94,11 @@ export class Database {
 
   async execute() {
     try {
-      console.log('Executing SQL Query:', this.query);
       const result = await this.dbClient.query(this.query, this.whereValues);
       this.clearQuery();
       return result;
     } catch (error) {
-      console.error('Error executing query:', error.message);
-      this.clearQuery();  // Очищення у випадку помилки
+      this.clearQuery();
       throw new Error(`Database query execution error: ${error.message}`);
     }
   }

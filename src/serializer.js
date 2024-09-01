@@ -2,12 +2,18 @@ const createTable = (schema) => {
   const jsonString = JSON.stringify(schema);
   const parsedData = JSON.parse(jsonString);
 
-  let query = `CREATE TABLE "${parsedData.Table.tableName}" (`;
+  let query = `CREATE TABLE IF NOT EXISTS "${parsedData.Table.tableName}" (`;
+
+  const foreignKeys = [];
 
   for (const [columnName, columnValue] of Object.entries(parsedData.Table.columns)) {
+    if (!columnValue || typeof columnValue.type !== 'string') {
+      throw new Error(`Invalid column definition for column "${columnName}".`);
+    }
+
     query += `"${columnName}" ${columnValue.type.toLowerCase()}`;
 
-    if (columnValue.length && columnValue.type.toLowerCase() !== 'uuid') {
+    if (typeof columnValue.length === 'number' && columnValue.type.toLowerCase() !== 'uuid') {
       query += `(${columnValue.length})`;
     }
 
@@ -24,34 +30,50 @@ const createTable = (schema) => {
     }
 
     if (columnValue.enum) {
+      if (!Array.isArray(columnValue.enum) || columnValue.enum.length === 0) {
+        throw new Error(`Invalid enum definition for column "${columnName}".`);
+      }
       const enumValues = columnValue.enum.map((value) => `'${value}'`).join(', ');
       query += ` CHECK ("${columnName}" IN (${enumValues}))`;
     }
 
     if (columnValue.foreignKey) {
-      query += `, FOREIGN KEY ("${columnName}") REFERENCES "${columnValue.foreignKey.table}"("${columnValue.foreignKey.column}")`;
+      const { table, column } = columnValue.foreignKey;
+      foreignKeys.push(`FOREIGN KEY ("${columnName}") REFERENCES "${table}"("${column}")`);
     }
 
     query += ', ';
   }
 
-  if (parsedData.Table.relations) {
-    for (const [relation, relationParams] of Object.entries(parsedData.Table.relations)) {
-      if (relation === 'OneToMany' || relation === 'OneToOne' || relation === 'ManyToOne') {
-        // Skip adding these since they're already handled via `foreignKey` in columns
-        continue;
-      } else if (relation === 'ManyToMany') {
-        const joinTableName = `${parsedData.Table.tableName}_${relationParams.relatedEntity}`;
-        query += `CREATE TABLE "${joinTableName}" (`;
-        query += `"${parsedData.Table.tableName}_id" INT, `;
-        query += `"${relationParams.relatedEntity}_id" INT, `;
-        query += `PRIMARY KEY ("${parsedData.Table.tableName}_id", "${relationParams.relatedEntity}_id")); `;
-      }
-    }
+  if (foreignKeys.length > 0) {
+    query += foreignKeys.join(', ') + ', ';
   }
 
   query = query.slice(0, -2);
   query += ');';
 
-  return query;
+  return query.trim();
+};
+
+
+export const createSchema = async (dbClient, schema) => {
+  const tableName = schema.Table.tableName;
+
+  const tableExistsQuery = `
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = $1
+    );
+  `;
+
+  const result = await dbClient.query(tableExistsQuery, [tableName]);
+
+  const tableExists = result[0].exists;
+  if (tableExists) {
+    return;
+  }
+
+  const createTableQuery = createTable(schema);
+  await dbClient.query(createTableQuery);
 };
