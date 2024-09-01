@@ -313,7 +313,7 @@ Creates a table from schema(json object).
 
 #### Methods
 
--  `createSchema(dbClient, assetSchema)` : Function to create tables and manage relationships.
+-  `createSchema(dbClient, schema)` : Function to create tables and manage relationships.
 
 ## Examples
 
