@@ -53,11 +53,7 @@ const assetSchema = {
       },
       'droneId': {
         'type': 'uuid',
-        'notNull': true,
-        // 'foreignKey': {
-        //   'table': 'Drone',
-        //   'column': 'droneId'
-        // }
+        'notNull': true
       }
     },
     'relations': {
@@ -74,13 +70,9 @@ const runTests = async () => {
   const dbFunction = new DatabaseFunction('Asset', dbClient);
 
   try {
-    // Create Drone table
-    await createSchema(dbClient, droneSchema);
-    console.log('✔️ Drone table created successfully.');
-
-    // Create Asset table
-    await createSchema(dbClient, assetSchema);
-    console.log('✔️ Asset table created successfully.');
+    // Create Drone and Asset tables
+    await createSchema(dbClient, [droneSchema, assetSchema]);
+    console.log('✔️ Drone and Asset tables created successfully.');
 
     // Insert into Drone table
     await dbClient.query(

@@ -3,11 +3,8 @@ const createTable = (schema) => {
   const parsedData = JSON.parse(jsonString);
   const tableName = parsedData.Table.tableName;
   const columns = parsedData.Table.columns;
-  const relations = parsedData.Table.relations || {};
 
   let query = `CREATE TABLE IF NOT EXISTS "${tableName}" (`;
-
-  const foreignKeys = [];
 
   for (const [columnName, columnValue] of Object.entries(columns)) {
     if (!columnValue || typeof columnValue.type !== 'string') {
@@ -40,58 +37,123 @@ const createTable = (schema) => {
       query += ` CHECK ("${columnName}" IN (${enumValues}))`;
     }
 
-    if (columnValue.foreignKey) {
-      const { table, column } = columnValue.foreignKey;
-      foreignKeys.push(`FOREIGN KEY ("${columnName}") REFERENCES "${table}"("${column}")`);
-    }
-
     query += ', ';
   }
 
-  // Append foreign keys to the query
-  if (foreignKeys.length > 0) {
-    query += foreignKeys.join(', ') + ', ';
-  }
-
-  query = query.slice(0, -2); // Remove last comma and space
+  query = query.slice(0, -2);
   query += ');';
-
-  // Handle ManyToMany relationships by creating join tables
-  if (relations.ManyToMany) {
-    for (const [relatedEntity, relationParams] of Object.entries(relations.ManyToMany)) {
-      const joinTableName = `${tableName}_${relationParams.relatedEntity}`;
-      query += ` CREATE TABLE IF NOT EXISTS "${joinTableName}" (`;
-      query += `"${tableName}_id" UUID NOT NULL, `;
-      query += `"${relationParams.relatedEntity}_id" UUID NOT NULL, `;
-      query += `PRIMARY KEY ("${tableName}_id", "${relationParams.relatedEntity}_id"), `;
-      query += `FOREIGN KEY ("${tableName}_id") REFERENCES "${tableName}"("id"), `;
-      query += `FOREIGN KEY ("${relationParams.relatedEntity}_id") REFERENCES "${relationParams.relatedEntity}"("id")`;
-      query += ');';
-    }
-  }
 
   return query.trim();
 };
 
-
-export const createSchema = async (dbClient, schema) => {
-  const tableName = schema.Table.tableName;
-
-  const tableExistsQuery = `
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_name = $1
-    );
-  `;
-
-  const result = await dbClient.query(tableExistsQuery, [tableName]);
-
-  const tableExists = result[0].exists;
-  if (tableExists) {
-    return;
+const addRelations = (schema, allSchemas) => {
+  if (!allSchemas) {
+    throw new Error('Schemas array is undefined or empty.');
   }
 
-  const createTableQuery = createTable(schema);
-  await dbClient.query(createTableQuery);
+  const jsonString = JSON.stringify(schema);
+  const parsedData = JSON.parse(jsonString);
+
+  const tableName = parsedData.Table.tableName;
+  const relations = parsedData.Table.relations || {};
+
+  const queries = [];
+
+  // ManyToOne
+  if (relations.ManyToOne) {
+    const manyToOneRelations = Array.isArray(relations.ManyToOne) ? relations.ManyToOne : [relations.ManyToOne];
+
+    for (const relationParams of manyToOneRelations) {
+      const query = `ALTER TABLE "${tableName}" ADD FOREIGN KEY ("${relationParams.foreignKey}")
+        REFERENCES "${relationParams.relatedEntity}"("${relationParams.foreignKey}");`;
+      queries.push(query);
+    }
+  }
+
+  // OneToMany
+  if (relations.OneToMany) {
+    const oneToManyRelations = Array.isArray(relations.OneToMany) ? relations.OneToMany : [relations.OneToMany];
+
+    for (const relationParams of oneToManyRelations) {
+      const query = `ALTER TABLE "${relationParams.relatedEntity}"
+        ADD FOREIGN KEY ("${relationParams.foreignKey}")
+        REFERENCES "${tableName}"("${relationParams.foreignKey}");`;
+      queries.push(query);
+    }
+  }
+
+  // OneToOne
+  if (relations.OneToOne) {
+    const oneToOneRelations = Array.isArray(relations.OneToOne) ? relations.OneToOne : [relations.OneToOne];
+
+    for (const relationParams of oneToOneRelations) {
+      const query = `ALTER TABLE "${tableName}" ADD UNIQUE ("${relationParams.foreignKey}"),` +
+        ` ADD FOREIGN KEY ("${relationParams.foreignKey}")` +
+        ` REFERENCES "${relationParams.relatedEntity}"("${relationParams.foreignKey}");`;
+      queries.push(query);
+    }
+  }
+
+  // ManyToMany
+  if (relations.ManyToMany) {
+    const relatedEntity = relations.ManyToMany.relatedEntity;
+    const foreignKey = relations.ManyToMany.foreignKey;
+
+    const relatedSchema = allSchemas.find((s) => s.Table.tableName === relatedEntity);
+    if (!relatedSchema) {
+      throw new Error(`Related schema for "${relatedEntity}" not found.`);
+    }
+
+    const relatedPrimaryKey = Object.keys(relatedSchema.Table.columns).find((col) => relatedSchema.Table.columns[col].primaryKey);
+
+    const joinTableName = `${tableName}_${relatedEntity}`;
+
+    const createJoinTableQuery = `
+      CREATE TABLE IF NOT EXISTS "${joinTableName}" (
+        "${tableName}_id" uuid NOT NULL,
+        "${relatedEntity}_id" uuid NOT NULL,
+        PRIMARY KEY ("${tableName}_id", "${relatedEntity}_id"),
+        FOREIGN KEY ("${tableName}_id") REFERENCES "${tableName}"("${foreignKey}"),
+        FOREIGN KEY ("${relatedEntity}_id") REFERENCES "${relatedEntity}"("${relatedPrimaryKey}")
+      );
+    `;
+
+    queries.push(createJoinTableQuery);
+  }
+
+  return queries.join(' ');
+};
+
+export const createSchema = async (dbClient, schemas) => {
+  for (const schema of schemas) {
+    const tableName = schema.Table.tableName;
+
+    const tableExistsQuery = `
+      SELECT EXISTS (
+        SELECT 1 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = $1
+      );
+    `;
+
+    const result = await dbClient.query(tableExistsQuery, [tableName]);
+
+    const tableExists = result?.rows?.[0]?.exists || false;
+
+    if (!tableExists) {
+      const createTableQuery = createTable(schema);
+      await dbClient.query(createTableQuery);
+    } else {
+      throw new Error(`Table "${tableName}" already exists.`);
+    }
+  }
+
+  for (const schema of schemas) {
+    const addRelationsQuery = addRelations(schema, schemas);
+
+    if (addRelationsQuery) {
+      await dbClient.query(addRelationsQuery);
+    }
+  }
 };

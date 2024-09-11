@@ -1,6 +1,6 @@
 {
   "name": "livesey-database",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "a lightweight module that allows you to work with database queries without using ORM",
   "main": "index.js",
   "type": "module",
