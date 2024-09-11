@@ -30,7 +30,7 @@ export class PostgresClient extends DatabaseClient {
     }
   }
 
-  release() {
+  async release() {
     return this.pool.end();
   }
 }

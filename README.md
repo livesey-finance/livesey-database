@@ -35,6 +35,8 @@ This package provides an abstract database client and a generic database interfa
 - [Support](#support)
 - [Contact](#contact)
 
+---
+
 ## Getting Started
 
 ### Installation
@@ -60,6 +62,8 @@ DB_PORT=3306 # or 5432 for PostgreSQL
 DB_SSL=true # or false for non-SSL connections
 ```
 
+---
+
 ## Usage
 
 ### 1. Initialize the Database Client
@@ -77,96 +81,69 @@ const dbClient = process.env.DB_TYPE === 'mysql' ? new MySQLClient() : new Postg
 
 #### Define and Create Schemas
 
-Define and create table schemas programmatically.
+You can create your own table using JSON syntax that follows structures like these:
 
 ```js
 import { createSchema } from 'livesey-database';
 
-const droneSchema = {
+export const PermissionSchema = {
   'Table': {
-    'tableName': 'Drone',
+    'tableName': 'Permission',
     'columns': {
-      'droneId': {
+      'permissionId': {
         'type': 'uuid',
         'primaryKey': true,
         'unique': true,
         'notNull': true
+      },
+      'permissionName': {
+        'type': 'varchar',
+        'length': 255,
+        'notNull': true
+      },
+      'description': {
+        'type': 'text'
       }
     }
   }
 };
 
-await createSchema(dbClient, droneSchema);
-console.log('Drone table created successfully.');
+await createSchema(dbClient, PermissionSchema);
+console.log('Permission table created successfully.');
 ```
 
 #### Foreign Keys and Relationships
 
-Define foreign keys and establish relationships between tables.
+If you want to create relationship (`OneToOne`, `ManyToOne`, `OneToMany`, `ManyToMany`) you should define it in `relations` sector.
 
 ```js
-const assetSchema = {
+export const RoleSchema = {
   'Table': {
-    'tableName': 'Asset',
+    'tableName': 'Role',
     'columns': {
-      'assetPriceId': {
+      'roleId': {
         'type': 'uuid',
         'primaryKey': true,
         'unique': true,
         'notNull': true
       },
-      'droneId': {
-        'type': 'uuid',
+      'roleName': {
+        'type': 'varchar',
+        'length': 255,
         'notNull': true
       }
     },
     'relations': {
-      'ManyToOne': {
-        'relatedEntity': 'Drone',
-        'foreignKey': 'droneId'
+      'ManyToMany': {
+        'relatedEntity': 'Permission',
+        'foreignKey': 'roleId'
       }
     }
   }
 };
 
-await createSchema(dbClient, assetSchema);
-console.log('Asset table with foreign key created successfully.');
-```
-
-or
-
-```js
-const assetSchema = {
-  'Table': {
-    'tableName': 'Asset',
-    'columns': {
-      'assetPriceId': {
-        'type': 'uuid',
-        'primaryKey': true,
-        'unique': true,
-        'notNull': true
-      },
-      'droneId': {
-        'type': 'uuid',
-        'notNull': true,
-        'foreignKey': {
-          'table': 'Drone',
-          'column': 'droneId',
-          'onDelete': 'CASCADE'
-        }
-      }
-    },
-    'relations': {
-      'ManyToOne': {
-        'relatedEntity': 'Drone',
-        'foreignKey': 'droneId'
-      }
-    }
-  }
-};
-
-await createSchema(dbClient, assetSchema);
-console.log('Asset table with foreign key created successfully.');
+await createSchema(dbClient, RoleSchema);
+console.log('Role table with ManyToMany relation was created successfully.');
 ```
 
 
@@ -238,10 +215,16 @@ console.log('User deleted successfully');
 Don't forget to release the database client connection when you are done:
 
 ```javascript
-dbClient.release();
+    try {
+      //some logic here 
+    } catch (error) {
+      console.error('❌ Database error:', error.message);
+    } finally {
+      await dbClient.release(); // break connection with db
+    }
 ```
 
-
+---
 
 
 ## API Reference
@@ -250,30 +233,42 @@ dbClient.release();
 
 An abstract class for creating a database client.
 
+#### Constructor
+
+-  `new DatabaseClient()`
+
 #### Methods
 
--  `connect()` : Establish a connection to the database. Must be implemented in derived classes.
--  `query(queryText, params)` : Execute a SQL query with optional parameters. Must be implemented in derived classes.
+-  `async connect()` : Establish a connection to the database. Must be implemented in derived classes.
+-  `async query(queryText, params)` : Execute a SQL query with optional parameters. Must be implemented in derived classes.
 -  `release()` : Close the database connection. Must be implemented in derived classes.
 
 ### `MySQLClient`
 
 Implements the `DatabaseClient` interface for MySQL databases.
 
+#### Constructor
+
+-  `new MySQLClient()`
+
 #### Methods
 
--  `connect()` : Returns a MySQL connection from the pool.
--  `query(queryText, params)` : Executes a SQL query using MySQL connection.
+-  `async connect()` : Returns a MySQL connection from the pool.
+-  `async query(queryText, params)` : Executes a SQL query using MySQL connection.
 -  `release()` : Ends all connections in the MySQL pool.
 
 ### `PostgresClient`
 
 Implements the `DatabaseClient` interface for PostgreSQL databases.
 
+#### Constructor
+
+-  `new PostgresClient()`
+
 #### Methods
 
--  `connect()` : Returns a PostgreSQL connection from the pool.
--  `query(queryText, params)` : Executes a SQL query using PostgreSQL connection.
+-  `async connect()` : Returns a PostgreSQL connection from the pool.
+-  `async query(queryText, params)` : Executes a SQL query using PostgreSQL connection.
 -  `release()` : Ends all connections in the PostgreSQL pool.
 
 ### `Database`
@@ -282,30 +277,34 @@ A class to build and execute SQL queries for a specific table.
 
 #### Constructor
 
--  `new Database(tableName, dbClient)` : Initializes a new instance of the `Database` class for a given table and database client.
+-  `new Database(tableName: string, dbClient: string)` : Initializes a new instance of the `Database` class for a given table and database client.
 
 #### Methods
 
--  `select(fields)` : Builds a SELECT SQL query. `fields` is an object where keys are column names.
--  `where(conditions)` : Adds a WHERE clause to the SQL query. `conditions` is an object with column names and their corresponding values or operators.
+-  `select(fields: Array)` : Builds a SELECT SQL query. `fields` is an array where keys are column names.
+-  `where(conditions: Object)` : Adds a WHERE clause to the SQL query. `conditions` is an object with column names and their corresponding values or operators.
 -  `insert()` : Begins an INSERT SQL query.
--  `into(columns)` : Specifies the columns for the INSERT SQL query.
--  `values(valuesArray)` : Adds values for the INSERT SQL query.
+-  `into(columns: Array)` : Specifies the columns for the INSERT SQL query.
+-  `values(valuesArray: Array)` : Adds values for the INSERT SQL query.
 -  `update()` : Begins an UPDATE SQL query.
--  `set(object)` : Sets the columns and values to be updated.
+-  `set(object: Object)` : Sets the columns and values to be updated.
 -  `delete()` : Begins a DELETE SQL query.
--  `execute()` : Executes the built SQL query.
+-  `async execute()` : Executes the built SQL query.
 
 ### `DatabaseFunction`
 
 Extends `Database` to provide higher-level operations such as finding, saving, updating, and deleting records.
 
+#### Constructor
+
+-  `new DatabaseFunction(tableName: string, dbClient: string)`
+
 #### Methods
 
--  `findRecord(criteria, selectFields)` : Finds a record matching the criteria.
--  `saveRecord(data)` : Inserts a new record into the table.
--  `updateRecord(criteria, updateData)` : Updates a record matching the criteria.
--  `deleteRecord(criteria)` : Deletes a record matching the criteria.
+-  `async findRecord(criteria: Object, selectFields: Array)` : Finds a record matching the criteria.
+-  `async saveRecord(data: Object)` : Inserts a new record into the table.
+-  `async updateRecord(criteria: Object, updateData: Object)` : Updates a record matching the criteria.
+-  `async deleteRecord(criteria: Object)` : Deletes a record matching the criteria.
 
 ### `createSchema`
 
@@ -313,23 +312,33 @@ Creates a table from schema(json object).
 
 #### Methods
 
--  `createSchema(dbClient, schema)` : Function to create tables and manage relationships.
+-  `createSchema(dbClient: string, schema: Object)` : Function to create tables and manage relationships.
+
+---
 
 ## Examples
 
 Refer to the Usage and Schema Creation sections above for detailed examples of how to use the package for different types of SQL operations and schema definitions.
 
+---
+
 ## Contributing
 
 Contributions are welcome! Please submit a pull request or open an issue on the GitHub repository.
+
+---
 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
 
+---
+
 ## Support
 
 If you have any questions or need further assistance, please open an issue on our GitHub repository or contact the maintainer.
+
+---
 
 ## Contact
 

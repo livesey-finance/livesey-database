@@ -28,7 +28,7 @@ export class MySQLClient extends DatabaseClient {
     }
   }
 
-  release() {
+  async release() {
     return this.pool.end();
   }
 }
