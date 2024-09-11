@@ -29,6 +29,7 @@ This package provides an abstract database client and a generic database interfa
   - [MySQLClient](#mysqlclient)
   - [PostgresClient](#postgresclient)
   - [Database](#database)
+  - [Indexes](#indexes)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
@@ -325,6 +326,86 @@ Refer to the Usage and Schema Creation sections above for detailed examples of h
 ## Contributing
 
 Contributions are welcome! Please submit a pull request or open an issue on the GitHub repository.
+
+---
+
+## Indexes
+
+Indexes are a crucial part of database optimization, improving the performance of queries by allowing faster data retrieval. The `livesey-database` package provides utility functions to create, manage, and delete indexes in both MySQL and PostgreSQL databases. 
+
+### Types of Indexes
+- **Standard Index**: Speeds up data retrieval based on the values in one or more columns.
+- **Unique Index**: Ensures that the values in the indexed column(s) are unique across all rows.
+
+### Functions for Managing Indexes
+
+The package provides three key functions for working with indexes:
+
+1. `createIndex`
+2. `createUniqueIndex`
+3. `dropIndex`
+
+These functions allow you to easily create and manage indexes on tables, supporting both MySQL and PostgreSQL syntax.
+
+---
+
+### `createIndex`
+
+Creates a standard index on one or more columns of a specified table.
+
+#### Parameters:
+- `tableName` (string): Name of the table on which the index will be created.
+- `dbClient` (DatabaseClient): The database client to use for the operation.
+- `dbType` (string): The type of database (`mysql` or `postgres`).
+- `columns` (string[]): The columns to be indexed.
+
+#### Example:
+
+```javascript
+await createIndex('User', dbClient, 'postgres', 'name', 'email');
+```
+
+In this example, an index will be created on the `name` and `email` columns of the `User` table in a PostgreSQL database.
+
+---
+
+### `createUniqueIndex`
+
+Creates a unique index on one or more columns, ensuring that values in the indexed columns are unique.
+
+#### Parameters:
+- `tableName` (string): Name of the table on which the unique index will be created.
+- `dbClient` (DatabaseClient): The database client to use for the operation.
+- `dbType` (string): The type of database (`mysql` or `postgres`).
+- `columns` (string[]): The columns to be indexed.
+
+#### Example:
+
+```javascript
+await createUniqueIndex('User', dbClient, 'mysql', 'email');
+```
+
+This creates a unique index on the `email` column of the `User` table in a MySQL database.
+
+---
+
+### `dropIndex`
+
+Drops an existing index from a table.
+
+#### Parameters:
+- `tableName` (string): The name of the table from which the index will be dropped.
+- `dbClient` (DatabaseClient): The database client to use for the operation.
+- `dbType` (string): The type of database (`mysql` or `postgres`).
+- `indexName` (string): The name of the index to be dropped.
+
+#### Example:
+
+```javascript
+await dropIndex('User', dbClient, 'postgres', 'User_email_idx');
+```
+
+This command will drop the index named `User_email_idx` from the `User` table in a PostgreSQL database.
 
 ---
 
