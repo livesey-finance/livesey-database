@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
-import { PostgresClient } from '../src/clients/postgresClient.js';
-import { DatabaseFunction } from '../src/functions.js';
+import { PostgresClient } from '../src/clients/postgresClient.js'; // Додайте також MySQLClient для MySQL
+import { Database } from '../src/database.js'; // Ваш універсальний клас Database
 import { createSchema } from '../src/serializer.js';
 
 // Schema for the Drone table
@@ -65,58 +65,74 @@ const assetSchema = {
   }
 };
 
-const runTests = async () => {
-  const dbClient = new PostgresClient();
-  const dbFunction = new DatabaseFunction('Asset', dbClient);
+const runTests = async (dbType = 'postgres') => {
+  let dbClient;
+
+  // Підключення відповідного клієнта залежно від типу бази даних
+  if (dbType === 'postgres') {
+    dbClient = new PostgresClient(); // Може бути також MySQLClient для MySQL
+  } else {
+    // Підключити MySQL клієнт (наприклад, MySQLClient)
+    dbClient = new MySQLClient();
+  }
+
+  const db = new Database('Asset', dbClient, dbType); // Використовується ваш універсальний клас Database
 
   try {
-    // Create Drone and Asset tables
-    await createSchema(dbClient, [droneSchema, assetSchema]);
+    // Створення таблиць
+    await createSchema(dbClient, [droneSchema, assetSchema], dbType);
     console.log('✔️ Drone and Asset tables created successfully.');
 
-    // Insert into Drone table
+    // Вставка в таблицю Drone
     await dbClient.query(
-      'INSERT INTO "Drone" ("droneId") VALUES ($1) ON CONFLICT DO NOTHING;',
+      dbType === 'postgres' ?
+        'INSERT INTO "Drone" ("droneId") VALUES ($1) ON CONFLICT DO NOTHING;' :
+        'INSERT INTO `Drone` (`droneId`) VALUES (?) ON DUPLICATE KEY UPDATE `droneId` = `droneId`;',
       ['123e4567-e89b-12d3-a456-426614174002']
     );
     console.log('✔️ Insertion into Drone successful.');
 
-    // Insert into Asset table
-    const insertResult = await dbFunction.saveRecord({
-      assetPriceId: '123e4567-e89b-12d3-a456-426614174000',
-      assetType: 'Shares',
-      assetId: '123e4567-e89b-12d3-a456-426614174001',
-      purchasePrice: 100.5,
-      currentPrice: 150.75,
-      priceDate: new Date(),
-      droneId: '123e4567-e89b-12d3-a456-426614174002'
-    });
+    // Вставка в таблицю Asset
+    const insertResult = await db.insert()
+      .into(['assetPriceId', 'assetType', 'assetId', 'purchasePrice', 'currentPrice', 'priceDate', 'droneId'])
+      .values([
+        '123e4567-e89b-12d3-a456-426614174000',
+        'Shares',
+        '123e4567-e89b-12d3-a456-426614174001',
+        100.5,
+        150.75,
+        new Date(),
+        '123e4567-e89b-12d3-a456-426614174002'
+      ])
+      .execute();
 
     assert.ok(insertResult, 'Failed to insert into Asset table.');
     console.log('✔️ Insertion into Asset successful.');
 
-    // Update a record
-    const updateResult = await dbFunction.updateRecord(
-      { assetPriceId: '123e4567-e89b-12d3-a456-426614174000' },
-      { currentPrice: 155.75 }
-    );
+    // Оновлення запису
+    const updateResult = await db.update()
+      .set({ currentPrice: 155.75 })
+      .where({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' })
+      .execute();
     assert.ok(updateResult, 'Failed to update Asset record.');
     console.log('✔️ Record update successful.');
 
-    // Delete a record
-    const deleteResult = await dbFunction.deleteRecord({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' });
+    // Видалення запису
+    const deleteResult = await db.delete()
+      .where({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' })
+      .execute();
     assert.ok(deleteResult, 'Failed to delete Asset record.');
     console.log('✔️ Record deletion successful.');
 
   } catch (error) {
     console.error('❌ Test error:', error.message);
   } finally {
-    // Cleaning up the database
+    // Очищення бази даних
     try {
-      await dbClient.query('DROP TABLE IF EXISTS "Asset" CASCADE;');
+      await dbClient.query(dbType === 'postgres' ? 'DROP TABLE IF EXISTS "Asset" CASCADE;' : 'DROP TABLE IF EXISTS `Asset`;');
       console.log('✔️ Asset table cleaned.');
 
-      await dbClient.query('DROP TABLE IF EXISTS "Drone" CASCADE;');
+      await dbClient.query(dbType === 'postgres' ? 'DROP TABLE IF EXISTS "Drone" CASCADE;' : 'DROP TABLE IF EXISTS `Drone`;');
       console.log('✔️ Drone table cleaned.');
     } catch (cleanupError) {
       console.error('❌ Database cleanup error:', cleanupError.message);
@@ -126,5 +142,8 @@ const runTests = async () => {
   }
 };
 
-// Run the tests
-runTests();
+// Запуск тестів для PostgreSQL
+runTests('postgres');
+
+// Для MySQL можна запустити тест так само:
+// runTests('mysql');
