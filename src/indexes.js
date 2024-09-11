@@ -28,6 +28,7 @@ export const createUniqueIndex = async (tableName, dbClient, dbType, ...columns)
   }
 };
 
+
 export const dropIndex = async (tableName, dbClient, dbType, indexName) => {
   let query = '';
 

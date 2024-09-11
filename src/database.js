@@ -87,11 +87,8 @@ export class Database {
     }
 
     const placeholders = [];
-    let index = 0;
-
-    for (const value of valuesArray) {
+    for (let index = 0; index < valuesArray.length; index++) {
       placeholders.push(this.formatPlaceholder(index));
-      index++;
     }
 
     this.query += ` VALUES (${placeholders.join(', ')})`;
@@ -130,6 +127,8 @@ export class Database {
 
   async execute() {
     try {
+      console.log('Executing Query:', this.query);  // Debugging output
+      console.log('With values:', this.whereValues); // Debugging output
       const result = await this.dbClient.query(this.query, this.whereValues);
       this.clearQuery();
       return result;

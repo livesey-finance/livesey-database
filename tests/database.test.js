@@ -1,9 +1,9 @@
 import { strict as assert } from 'node:assert';
-import { PostgresClient } from '../src/clients/postgresClient.js'; // Додайте також MySQLClient для MySQL
-import { Database } from '../src/database.js'; // Ваш універсальний клас Database
+import { PostgresClient } from '../src/clients/postgresClient.js';
+import { DatabaseFunction } from '../src/functions.js';
 import { createSchema } from '../src/serializer.js';
+import { createIndex, createUniqueIndex, dropIndex } from '../src/indexes.js';
 
-// Schema for the Drone table
 const droneSchema = {
   'Table': {
     'tableName': 'Drone',
@@ -18,7 +18,6 @@ const droneSchema = {
   }
 };
 
-// Schema for the Asset table
 const assetSchema = {
   'Table': {
     'tableName': 'Asset',
@@ -68,32 +67,33 @@ const assetSchema = {
 const runTests = async (dbType = 'postgres') => {
   let dbClient;
 
-  // Підключення відповідного клієнта залежно від типу бази даних
   if (dbType === 'postgres') {
-    dbClient = new PostgresClient(); // Може бути також MySQLClient для MySQL
+    dbClient = new PostgresClient();
   } else {
-    // Підключити MySQL клієнт (наприклад, MySQLClient)
     dbClient = new MySQLClient();
   }
 
-  const db = new Database('Asset', dbClient, dbType); // Використовується ваш універсальний клас Database
+  const assetDbFunction = new DatabaseFunction('Asset', dbClient);
+  const droneDbFunction = new DatabaseFunction('Drone', dbClient);
 
   try {
-    // Створення таблиць
+    await dbClient.beginTransaction();
+
     await createSchema(dbClient, [droneSchema, assetSchema], dbType);
     console.log('✔️ Drone and Asset tables created successfully.');
 
-    // Вставка в таблицю Drone
-    await dbClient.query(
-      dbType === 'postgres' ?
-        'INSERT INTO "Drone" ("droneId") VALUES ($1) ON CONFLICT DO NOTHING;' :
-        'INSERT INTO `Drone` (`droneId`) VALUES (?) ON DUPLICATE KEY UPDATE `droneId` = `droneId`;',
-      ['123e4567-e89b-12d3-a456-426614174002']
-    );
-    console.log('✔️ Insertion into Drone successful.');
+    await createIndex('Asset', dbClient, dbType, 'assetId');
+    await createUniqueIndex('Asset', dbClient, dbType, 'assetType');
+    console.log('✔️ Indexes created successfully.');
 
-    // Вставка в таблицю Asset
-    const insertResult = await db.insert()
+    const droneSaveResult = await droneDbFunction.insert()
+      .into(['droneId'])
+      .values(['123e4567-e89b-12d3-a456-426614174002'])
+      .execute();
+    assert.ok(droneSaveResult, 'Failed to insert into Drone table.');
+    console.log('✔️ Drone record inserted successfully.');
+
+    const assetSaveResult = await assetDbFunction.insert()
       .into(['assetPriceId', 'assetType', 'assetId', 'purchasePrice', 'currentPrice', 'priceDate', 'droneId'])
       .values([
         '123e4567-e89b-12d3-a456-426614174000',
@@ -105,29 +105,54 @@ const runTests = async (dbType = 'postgres') => {
         '123e4567-e89b-12d3-a456-426614174002'
       ])
       .execute();
+    assert.ok(assetSaveResult, 'Failed to insert into Asset table.');
+    console.log('✔️ Asset record inserted successfully.');
 
-    assert.ok(insertResult, 'Failed to insert into Asset table.');
-    console.log('✔️ Insertion into Asset successful.');
+    const foundAsset = await assetDbFunction.select()
+      .where({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' })
+      .execute();
+    assert.ok(foundAsset.length > 0, 'Failed to find Asset record.');
+    console.log('✔️ Asset record found successfully:', foundAsset);
 
-    // Оновлення запису
-    const updateResult = await db.update()
+    const updateResult = await assetDbFunction.update()
       .set({ currentPrice: 155.75 })
       .where({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' })
       .execute();
     assert.ok(updateResult, 'Failed to update Asset record.');
-    console.log('✔️ Record update successful.');
+    console.log('✔️ Asset record updated successfully.');
 
-    // Видалення запису
-    const deleteResult = await db.delete()
+    const updatedAsset = await assetDbFunction.select()
+      .where({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' })
+      .execute();
+    assert.strictEqual(updatedAsset[0].currentPrice, 155.75, 'Asset currentPrice was not updated correctly.');
+    console.log('✔️ Asset currentPrice updated successfully:', updatedAsset);
+
+    const deleteResult = await assetDbFunction.delete()
       .where({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' })
       .execute();
     assert.ok(deleteResult, 'Failed to delete Asset record.');
-    console.log('✔️ Record deletion successful.');
+    console.log('✔️ Asset record deleted successfully.');
+
+    const deletedAsset = await assetDbFunction.select()
+      .where({ assetPriceId: '123e4567-e89b-12d3-a456-426614174000' })
+      .execute();
+    assert.strictEqual(deletedAsset.length, 0, 'Asset record was not deleted.');
+    console.log('✔️ Asset record deletion confirmed.');
+
+    await dropIndex('Asset', dbClient, dbType, 'Asset_assetId_idx');
+    await dropIndex('Asset', dbClient, dbType, 'Asset_assetType_uniq');
+    console.log('✔️ Indexes dropped successfully.');
+
+    await dbClient.commitTransaction();
+    console.log('✔️ Transaction committed successfully.');
 
   } catch (error) {
     console.error('❌ Test error:', error.message);
+
+    await dbClient.rollbackTransaction();
+    console.log('❌ Transaction rolled back due to error.');
+
   } finally {
-    // Очищення бази даних
     try {
       await dbClient.query(dbType === 'postgres' ? 'DROP TABLE IF EXISTS "Asset" CASCADE;' : 'DROP TABLE IF EXISTS `Asset`;');
       console.log('✔️ Asset table cleaned.');
@@ -141,9 +166,3 @@ const runTests = async (dbType = 'postgres') => {
     }
   }
 };
-
-// Запуск тестів для PostgreSQL
-runTests('postgres');
-
-// Для MySQL можна запустити тест так само:
-// runTests('mysql');
