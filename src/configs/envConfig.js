@@ -11,10 +11,3 @@ export const dbPassword = Strings.isString(process.env.DB_PASSWORD).getValue();
 export const dbName = Strings.isString(process.env.DB_NAME).getValue();
 export const dbPort = Strings.isString(process.env.DB_PORT).getValue();
 export const dbSsl = Strings.isString(process.env.DB_SSL).getValue();
-
-
-
-
-
-
-

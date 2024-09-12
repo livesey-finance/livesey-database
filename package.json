@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "npx eslint . --fix && node index.js",
-    "test": "node --test tests/*.test.js "
+    "test": "tap run"
   },
   "publishConfig": {
-  "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,8 @@
   "license": "MIT",
   "devDependencies": {
     "eslint": "^9.9.1",
-    "eslint-config-google": "^0.14.0"
+    "eslint-config-google": "^0.14.0",
+    "tap": "^21.0.1"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

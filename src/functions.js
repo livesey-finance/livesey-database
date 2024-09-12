@@ -1,8 +1,8 @@
 import { Database } from './database.js';
 
 export class DatabaseFunction extends Database {
-  constructor(tableName, dbClient) {
-    super(tableName, dbClient);
+  constructor(tableName, dbClient, dbType) {
+    super(tableName, dbClient, dbType);
   }
 
   async findRecord(criteria = {}, selectFields = null) {

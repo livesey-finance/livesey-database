@@ -1,0 +1,20 @@
+TAP version 14
+Users table created successfully
+Executing Query: SELECT "id", "name" FROM "users" WHERE "id" = $1
+With values: [ [33m1[39m ]
+# Subtest: test Database class methods
+    ok 1 - SELECT query executed successfully
+Executing Query: INSERT INTO "users" ("name") VALUES ($1)
+With values: [ [32m'John Doe'[39m ]
+    ok 2 - INSERT query executed successfully
+Executing Query: UPDATE "users" SET "name" = $1 WHERE "id" = $2
+With values: [ [32m'John Updated'[39m, [33m1[39m ]
+    ok 3 - UPDATE query executed successfully
+Executing Query: DELETE FROM "users" WHERE "id" = $1
+With values: [ [33m1[39m ]
+    ok 4 - DELETE query executed successfully
+    1..4
+ok 1 - test Database class methods # time=16.266ms
+
+1..1
+Users table dropped successfully
