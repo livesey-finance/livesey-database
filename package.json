@@ -27,8 +27,7 @@
   "license": "MIT",
   "devDependencies": {
     "eslint": "^9.9.1",
-    "eslint-config-google": "^0.14.0",
-    "tap": "^21.0.1"
+    "eslint-config-google": "^0.14.0"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
