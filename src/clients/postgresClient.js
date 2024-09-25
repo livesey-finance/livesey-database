@@ -1,19 +1,14 @@
-import pkg from 'pg';
-const { Pool } = pkg;
-import { dbHost, dbUser, dbPassword, dbName, dbPort, dbSsl } from '../configs/envConfig.js';
+
 import { DatabaseClient } from './databaseClient.js';
 
 export class PostgresClient extends DatabaseClient {
-  constructor() {
+  constructor(postgresPool) {
     super();
-    this.pool = new Pool({
-      host: dbHost,
-      user: dbUser,
-      password: dbPassword,
-      database: dbName,
-      port: dbPort,
-      ssl: dbSsl === 'true' ? { rejectUnauthorized: false } : false,
-    });
+    this.pool = postgresPool;
+  }
+
+  static newPostgresClient(postgresPool) {
+    return new PostgresClient(postgresPool);
   }
 
   async connect() {
@@ -25,6 +20,8 @@ export class PostgresClient extends DatabaseClient {
     try {
       const result = await client.query(queryText, params);
       return result.rows;
+    } catch (error) {
+      throw new Error('Error during query processing');
     } finally {
       client.release();
     }

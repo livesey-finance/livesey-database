@@ -1,17 +1,13 @@
-import mysql from 'mysql2/promise';
-import { dbHost, dbUser, dbPassword, dbName, dbPort } from '../configs/envConfig.js';
 import { DatabaseClient } from './databaseClient.js';
 
 export class MySQLClient extends DatabaseClient {
-  constructor() {
+  constructor(mySqlPool) {
     super();
-    this.pool = mysql.createPool({
-      host: dbHost,
-      user: dbUser,
-      password: dbPassword,
-      database: dbName,
-      port: dbPort,
-    });
+    this.pool = mySqlPool;
+  }
+
+  static newMySQLClient(mySqlPool) {
+    return new MySQLClient(mySqlPool);
   }
 
   async connect() {
@@ -23,6 +19,8 @@ export class MySQLClient extends DatabaseClient {
     try {
       const [rows] = await connection.query(queryText, params);
       return rows;
+    } catch (error) {
+      throw new Error('Error during query processing');
     } finally {
       connection.release();
     }
