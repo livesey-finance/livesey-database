@@ -1,6 +1,6 @@
 {
 	"name": "livesey-database",
-	"version": "1.0.9",
+	"version": "1.0.10",
 	"description": "a lightweight module that allows you to work with database queries without using ORM",
 	"main": "index.js",
 	"module": "wrapper.mjs",
@@ -18,14 +18,7 @@
 		"type": "git",
 		"url": "git+https://github.com/livesey-finance/livesey-database"
 	},
-	"keywords": [
-		"orm",
-		"database",
-		"javascript",
-		"postgres",
-		"pg",
-		"mysql"
-	],
+	"keywords": ["orm", "database", "javascript", "postgres", "pg", "mysql"],
 	"author": "hhuziuk",
 	"license": "MIT",
 	"devDependencies": {

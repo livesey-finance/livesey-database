@@ -13,17 +13,27 @@ class Database {
 	}
 
 	formatColumnName(column) {
-		return this.dbType === "postgres" ? `"${column}"` : `\`${column}\``;
+		if (this.dbType === "postgres") {
+			return `"${column}"`;
+		} else {
+			return `\`${column}\``;
+		}
 	}
 
 	formatTableName() {
-		return this.dbType === "postgres"
-			? `"${this.tableName}"`
-			: `\`${this.tableName}\``;
+		if (this.dbType === "postgres") {
+			return `"${this.tableName}"`;
+		} else {
+			return `\`${this.tableName}\``;
+		}
 	}
 
 	formatPlaceholder(index) {
-		return this.dbType === "postgres" ? `$${index + 1}` : "?";
+		if (this.dbType === "postgres") {
+			return `$${index + 1}`;
+		} else {
+			return "?";
+		}
 	}
 
 	select(fields) {
