@@ -179,18 +179,18 @@ const createSchema = async (dbClient, schemas, dbType) => {
 			const createTableQuery = createTable(schema, dbType);
 			await dbClient.query(createTableQuery);
 		} else {
-			throw new Error(`Table "${tableName}" already exists.`);
+			return;
 		}
 	}
 
 	for (const schema of schemas) {
 		const addRelationsQuery = addRelations(schema, schemas, dbType);
-
 		if (addRelationsQuery) {
 			await dbClient.query(addRelationsQuery);
 		}
 	}
 };
+
 
 module.exports = {
 	createSchema,

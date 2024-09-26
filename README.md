@@ -95,7 +95,8 @@ npm i mysql2 # for MySQL
 
 **If you use PostgreSQL(ESM)**:
 ``` js
-import { Pool } from "pg";
+import pkg from 'pg';
+const { Pool } = pkg;
 
 const postgresPool = new Pool({
 	host: dbHost,
