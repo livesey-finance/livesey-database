@@ -4,28 +4,14 @@ const createTable = (schema, dbType) => {
 	const tableName = parsedData.Table.tableName;
 	const columns = parsedData.Table.columns;
 
-	let query = `CREATE TABLE IF NOT EXISTS `;
-
-	if (dbType === "postgres") {
-		query += `"${tableName}"`;
-	} else {
-		query += `\`${tableName}\``;
-	}
-
-	query += ` (`;
+	let query = `CREATE TABLE IF NOT EXISTS ${dbType === "postgres" ? `"${tableName}"` : `\`${tableName}\``} (`;
 
 	for (const [columnName, columnValue] of Object.entries(columns)) {
 		if (!columnValue || typeof columnValue.type !== "string") {
 			throw new Error(`Invalid column definition for column "${columnName}".`);
 		}
 
-		query += ` `;
-		if (dbType === "postgres") {
-			query += `"${columnName}"`;
-		} else {
-			query += `\`${columnName}\``;
-		}
-		query += ` ${columnValue.type.toLowerCase()}`;
+		query += `${dbType === "postgres" ? `"${columnName}"` : `\`${columnName}\``} ${columnValue.type.toLowerCase()}`;
 
 		if (
 			typeof columnValue.length === "number" &&
@@ -53,12 +39,7 @@ const createTable = (schema, dbType) => {
 			const enumValues = columnValue.enum
 				.map((value) => `'${value}'`)
 				.join(", ");
-
-			if (dbType === "postgres") {
-				query += ` CHECK ("${columnName}" IN (${enumValues}))`;
-			} else {
-				query += ` CHECK (\`${columnName}\` IN (${enumValues}))`;
-			}
+			query += ` CHECK (${dbType === "postgres" ? `"${columnName}"` : `\`${columnName}\``} IN (${enumValues}))`;
 		}
 
 		query += ", ";
@@ -85,114 +66,46 @@ const addRelations = (schema, allSchemas, dbType) => {
 
 	// ManyToOne
 	if (relations.ManyToOne) {
-		let manyToOneRelations;
-
-		if (Array.isArray(relations.ManyToOne)) {
-			manyToOneRelations = relations.ManyToOne;
-		} else {
-			manyToOneRelations = [relations.ManyToOne];
-		}
+		const manyToOneRelations = Array.isArray(relations.ManyToOne)
+			? relations.ManyToOne
+			: [relations.ManyToOne];
 
 		for (const relationParams of manyToOneRelations) {
-			let tableNameWrapped;
-			let foreignKeyWrapped;
-			let relatedEntityWrapped;
-
-			if (dbType === "postgres") {
-				tableNameWrapped = `"${tableName}"`;
-				foreignKeyWrapped = `"${relationParams.foreignKey}"`;
-				relatedEntityWrapped = `"${relationParams.relatedEntity}"`;
-			} else {
-				tableNameWrapped = `\`${tableName}\``;
-				foreignKeyWrapped = `\`${relationParams.foreignKey}\``;
-				relatedEntityWrapped = `\`${relationParams.relatedEntity}\``;
-			}
-
-			const query = `ALTER TABLE ${tableNameWrapped}
-			ADD FOREIGN KEY (${foreignKeyWrapped})
-			REFERENCES ${relatedEntityWrapped}
-			(${foreignKeyWrapped});`;
-
+			const query = `ALTER TABLE ${dbType === "postgres" ? `"${tableName}"` : `\`${tableName}\``}
+        ADD FOREIGN KEY (${dbType === "postgres" ? `"${relationParams.foreignKey}"` : `\`${relationParams.foreignKey}\``})
+        REFERENCES ${dbType === "postgres" ? `"${relationParams.relatedEntity}"` : `\`${relationParams.relatedEntity}\``}
+        (${dbType === "postgres" ? `"${relationParams.foreignKey}"` : `\`${relationParams.foreignKey}\``});`;
 			queries.push(query);
 		}
 	}
 
 	// OneToMany
 	if (relations.OneToMany) {
-		let oneToManyRelations;
-		if (Array.isArray(relations.OneToMany)) {
-			oneToManyRelations = relations.OneToMany;
-		} else {
-			oneToManyRelations = [relations.OneToMany];
-		}
+		const oneToManyRelations = Array.isArray(relations.OneToMany)
+			? relations.OneToMany
+			: [relations.OneToMany];
 
 		for (const relationParams of oneToManyRelations) {
-			let relatedEntityFormatted;
-			if (dbType === "postgres") {
-				relatedEntityFormatted = `"${relationParams.relatedEntity}"`;
-			} else {
-				relatedEntityFormatted = `\`${relationParams.relatedEntity}\``;
-			}
-
-			let foreignKeyFormatted;
-			if (dbType === "postgres") {
-				foreignKeyFormatted = `"${relationParams.foreignKey}"`;
-			} else {
-				foreignKeyFormatted = `\`${relationParams.foreignKey}\``;
-			}
-
-			let tableNameFormatted;
-			if (dbType === "postgres") {
-				tableNameFormatted = `"${tableName}"`;
-			} else {
-				tableNameFormatted = `\`${tableName}\``;
-			}
-
-			let foreignKeyReferenceFormatted;
-			if (dbType === "postgres") {
-				foreignKeyReferenceFormatted = `"${relationParams.foreignKey}"`;
-			} else {
-				foreignKeyReferenceFormatted = `\`${relationParams.foreignKey}\``;
-			}
-
-			const query = `ALTER TABLE ${relatedEntityFormatted} ADD FOREIGN KEY (${foreignKeyFormatted}) REFERENCES ${tableNameFormatted} (${foreignKeyReferenceFormatted});`;
-
+			const query = `ALTER TABLE ${dbType === "postgres" ? `"${relationParams.relatedEntity}"` : `\`${relationParams.relatedEntity}\``}
+        ADD FOREIGN KEY (${dbType === "postgres" ? `"${relationParams.foreignKey}"` : `\`${relationParams.foreignKey}\``})
+        REFERENCES ${dbType === "postgres" ? `"${tableName}"` : `\`${tableName}\``}
+        (${dbType === "postgres" ? `"${relationParams.foreignKey}"` : `\`${relationParams.foreignKey}\``});`;
 			queries.push(query);
 		}
 	}
 
 	// OneToOne
 	if (relations.OneToOne) {
-		let oneToOneRelations;
-		if (Array.isArray(relations.OneToOne)) {
-			oneToOneRelations = relations.OneToOne;
-		} else {
-			oneToOneRelations = [relations.OneToOne];
-		}
+		const oneToOneRelations = Array.isArray(relations.OneToOne)
+			? relations.OneToOne
+			: [relations.OneToOne];
 
 		for (const relationParams of oneToOneRelations) {
-			let formattedTableName;
-			if (dbType === "postgres") {
-				formattedTableName = `"${tableName}"`;
-			} else {
-				formattedTableName = `\`${tableName}\``;
-			}
-
-			let formattedForeignKey;
-			if (dbType === "postgres") {
-				formattedForeignKey = `"${relationParams.foreignKey}"`;
-			} else {
-				formattedForeignKey = `\`${relationParams.foreignKey}\``;
-			}
-
-			let formattedRelatedEntity;
-			if (dbType === "postgres") {
-				formattedRelatedEntity = `"${relationParams.relatedEntity}"`;
-			} else {
-				formattedRelatedEntity = `\`${relationParams.relatedEntity}\``;
-			}
-
-			const query = `ALTER TABLE ${formattedTableName} ADD UNIQUE (${formattedForeignKey}), ADD FOREIGN KEY (${formattedForeignKey}) REFERENCES ${formattedRelatedEntity} (${formattedForeignKey});`;
+			const query = `ALTER TABLE ${dbType === "postgres" ? `"${tableName}"` : `\`${tableName}\``} 
+        ADD UNIQUE (${dbType === "postgres" ? `"${relationParams.foreignKey}"` : `\`${relationParams.foreignKey}\``}),
+        ADD FOREIGN KEY (${dbType === "postgres" ? `"${relationParams.foreignKey}"` : `\`${relationParams.foreignKey}\``})
+        REFERENCES ${dbType === "postgres" ? `"${relationParams.relatedEntity}"` : `\`${relationParams.relatedEntity}\``}
+        (${dbType === "postgres" ? `"${relationParams.foreignKey}"` : `\`${relationParams.foreignKey}\``});`;
 			queries.push(query);
 		}
 	}
@@ -215,57 +128,19 @@ const addRelations = (schema, allSchemas, dbType) => {
 
 		const joinTableName = `${tableName}_${relatedEntity}`;
 
-		let joinTableWrapped = "";
-		let tableIdWrapped = "";
-		let relatedEntityIdWrapped = "";
-		let primaryKeyWrapped = "";
-		let tableForeignKeyWrapped = "";
-		let relatedEntityForeignKeyWrapped = "";
-
-		if (dbType === "postgres") {
-			joinTableWrapped = `"${joinTableName}"`;
-			tableIdWrapped = `"${tableName}_id" uuid NOT NULL`;
-			relatedEntityIdWrapped = `"${relatedEntity}_id" uuid NOT NULL`;
-			primaryKeyWrapped = `"${tableName}_id", "${relatedEntity}_id"`;
-			tableForeignKeyWrapped = `"${tableName}_id"`;
-			relatedEntityForeignKeyWrapped = `"${relatedEntity}_id"`;
-		} else {
-			joinTableWrapped = `\`${joinTableName}\``;
-			tableIdWrapped = `\`${tableName}_id\` VARCHAR(36) NOT NULL`;
-			relatedEntityIdWrapped = `\`${relatedEntity}_id\` VARCHAR(36) NOT NULL`;
-			primaryKeyWrapped = `\`${tableName}_id\`, \`${relatedEntity}_id\``;
-			tableForeignKeyWrapped = `\`${tableName}_id\``;
-			relatedEntityForeignKeyWrapped = `\`${relatedEntity}_id\``;
-		}
-
-		let tableWrapped;
-		let foreignKeyWrapped;
-		let relatedEntityWrapped;
-		let relatedPrimaryKeyWrapped;
-
-		if (dbType === "postgres") {
-			tableWrapped = `"${tableName}"`;
-			foreignKeyWrapped = `"${foreignKey}"`;
-			relatedEntityWrapped = `"${relatedEntity}"`;
-			relatedPrimaryKeyWrapped = `"${relatedPrimaryKey}"`;
-		} else {
-			tableWrapped = `\`${tableName}\``;
-			foreignKeyWrapped = `\`${foreignKey}\``;
-			relatedEntityWrapped = `\`${relatedEntity}\``;
-			relatedPrimaryKeyWrapped = `\`${relatedPrimaryKey}\``;
-		}
-
 		const createJoinTableQuery = `
-		  CREATE TABLE IF NOT EXISTS ${joinTableWrapped} (
-			${tableIdWrapped},
-			${relatedEntityIdWrapped},
-			PRIMARY KEY (${primaryKeyWrapped}),
-			FOREIGN KEY (${tableForeignKeyWrapped})
-			REFERENCES ${tableWrapped} (${foreignKeyWrapped}),
-			FOREIGN KEY (${relatedEntityForeignKeyWrapped})
-			REFERENCES ${relatedEntityWrapped} (${relatedPrimaryKeyWrapped})
-		  );
-		`;
+      CREATE TABLE IF NOT EXISTS ${dbType === "postgres" ? `"${joinTableName}"` : `\`${joinTableName}\``} (
+        ${dbType === "postgres" ? `"${tableName}_id" uuid NOT NULL` : `\`${tableName}_id\` VARCHAR(36) NOT NULL`},
+        ${dbType === "postgres" ? `"${relatedEntity}_id" uuid NOT NULL` : `\`${relatedEntity}_id\` VARCHAR(36) NOT NULL`},
+        PRIMARY KEY (${dbType === "postgres" ? `"${tableName}_id", "${relatedEntity}_id"` : `\`${tableName}_id\`, \`${relatedEntity}_id\``}),
+        FOREIGN KEY (${dbType === "postgres" ? `"${tableName}_id"` : `\`${tableName}_id\``})
+        REFERENCES ${dbType === "postgres" ? `"${tableName}"` : `\`${tableName}\``}
+        (${dbType === "postgres" ? `"${foreignKey}"` : `\`${foreignKey}\``}),
+        FOREIGN KEY (${dbType === "postgres" ? `"${relatedEntity}_id"` : `\`${relatedEntity}_id\``})
+        REFERENCES ${dbType === "postgres" ? `"${relatedEntity}"` : `\`${relatedEntity}\``}
+        (${dbType === "postgres" ? `"${relatedPrimaryKey}"` : `\`${relatedPrimaryKey}\``})
+      );
+    `;
 
 		queries.push(createJoinTableQuery);
 	}
@@ -277,36 +152,28 @@ const createSchema = async (dbClient, schemas, dbType) => {
 	for (const schema of schemas) {
 		const tableName = schema.Table.tableName;
 
-		let tableExistsQuery;
-		if (dbType === "postgres") {
-			tableExistsQuery = `
+		const tableExistsQuery =
+			dbType === "postgres"
+				? `
         SELECT EXISTS (
           SELECT 1 
           FROM information_schema.tables 
           WHERE table_schema = 'public' 
           AND table_name = $1
         );
-      `;
-		} else {
-			tableExistsQuery = `
+      `
+				: `
         SELECT COUNT(*) AS count 
         FROM information_schema.tables 
         WHERE table_name = ?;
       `;
-		}
 
 		const result = await dbClient.query(tableExistsQuery, [tableName]);
 
-		let tableExists = false;
-		if (dbType === "postgres") {
-			if (result && result.rows && result.rows[0] && result.rows[0].exists) {
-				tableExists = result.rows[0].exists;
-			}
-		} else {
-			if (result && result[0] && result[0].count > 0) {
-				tableExists = true;
-			}
-		}
+		const tableExists =
+			dbType === "postgres"
+				? result?.rows?.[0]?.exists || false
+				: result?.[0]?.count > 0;
 
 		if (!tableExists) {
 			const createTableQuery = createTable(schema, dbType);
@@ -323,6 +190,7 @@ const createSchema = async (dbClient, schemas, dbType) => {
 		}
 	}
 };
+
 
 module.exports = {
 	createSchema,
