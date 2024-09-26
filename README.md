@@ -502,7 +502,7 @@ tests
 
 If you want to run tests on your local machine, you have to follow these steps:
 
-1. Install and configure environmental variables
+1. **Install and configure environmental variables**
 
 You have to install `dotenv` package via NPM:
 ``` sh
@@ -521,16 +521,16 @@ DB_PORT=3306 # for MySQL or 5432 for PostgreSQL
 DB_SSL=true # or false for non-SSL connections
 ```
 
-2. You have to install pg or mysql2 package via NPM:
+2. **You have to install pg or mysql2 package via NPM:**
 
 ``` sh
 npm i pg # for PostgreSQL
 npm i mysql2 # for MySQL
 ```
 
-3. All tests in `src/tests` are wrapped in quotes as comments - uncomment it
+3. **All tests in `src/tests` are wrapped in quotes as comments - uncomment it**
 
-4. Use `npm run test` to start tests
+4. **Use `npm run test` to start tests**
 
 You can find this block of code in `package.json`:
 
@@ -543,7 +543,7 @@ You can find this block of code in `package.json`:
 
 So, if you want to correct syntax in test or in new code, you have to run `npm run lint command`.
 
-5. Happy testing👩‍💻
+5. **Happy testing 👩‍💻**
 
 
 ---
