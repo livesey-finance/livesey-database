@@ -30,7 +30,7 @@ This package provides an abstract database client and a generic database interfa
   - [PostgresClient](#postgresclient)
   - [Database](#database)
   - [Indexes](#indexes)
-- [Examples](#examples)
+- [Tests](#tests)
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
@@ -405,9 +405,66 @@ Creates a table from schema(json object).
 
 ---
 
-## Examples
+## Tests
 
-Refer to the Usage and Schema Creation sections above for detailed examples of how to use the package for different types of SQL operations and schema definitions.
+You can test this module using tests in `src/test` folder. Here is the structure:
+```sh
+tests
+├── connection.test.js
+├── database.test.js
+├── envConfig.js
+├── functions.test.js
+├── indexes.test.js
+└── serializer.test.js
+
+1 directory, 6 files
+```
+
+If you want to run tests on your local machine, you have to follow these steps:
+
+1. Install and configure environmental variables
+
+You have to install `dotenv` package via NPM:
+``` sh
+npm i dotenv
+```
+
+Create `.env` file and put there these variables(you can put more if you want to use additional functionality in pools):
+
+```env
+DB_TYPE=mysql # or postgres
+DB_HOST=#your host
+DB_USER=#your username
+DB_PASSWORD=#your password
+DB_NAME= #your database name
+DB_PORT=3306 # for MySQL or 5432 for PostgreSQL
+DB_SSL=true # or false for non-SSL connections
+```
+
+2. You have to install pg or mysql2 package via NPM:
+
+``` sh
+npm i pg # for PostgreSQL
+npm i mysql2 # for MySQL
+```
+
+3. All tests in `src/tests` are wrapped in quotes as comments - uncomment it
+
+4. Use `npm run test` to start tests
+
+You can find this block of code in `package.json`:
+
+```json
+"scripts": {
+		"lint": "npx biome format . --write",
+		"test": "node --test tests/*.test.js"
+	}
+```
+
+So, if you want to correct syntax in test or in new code, you have to run `npm run lint command`.
+
+5. Happy testing👩‍💻
+
 
 ---
 
