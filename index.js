@@ -1,6 +1,15 @@
-export * from './src/clients/databaseClient.js';
-export * from './src/clients/mySQLClient.js';
-export * from './src/clients/postgresClient.js';
-export * from './src/database.js';
-export * from './src/functions.js';
-export * from './src/serializer.js';
+const databaseClient = require("./src/clients/databaseClient.js");
+const mySQLClient = require("./src/clients/mySQLClient.js");
+const postgresClient = require("./src/clients/postgresClient.js");
+const database = require("./src/database.js");
+const functions = require("./src/functions.js");
+const serializer = require("./src/serializer.js");
+
+module.exports = {
+	...databaseClient,
+	...mySQLClient,
+	...postgresClient,
+	...database,
+	...functions,
+	...serializer,
+};

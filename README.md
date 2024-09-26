@@ -62,6 +62,90 @@ DB_NAME= #your database name
 DB_PORT=3306 # or 5432 for PostgreSQL
 DB_SSL=true # or false for non-SSL connections
 ```
+To use it you have to install and import **dotenv** package:
+
+* Installation: 
+
+``` sh
+npm i dotenv
+```
+
+**Import for ECMAScript:**
+
+``` js
+import dotenv from 'dotenv';
+dotenv.config();
+```
+
+**Import for CommonJS:**
+
+``` js
+const dotenv = require("dotenv");
+dotenv.config();
+```
+
+You also have to install and set pools for database packages, you will work with:
+
+* Installation: 
+
+``` sh
+npm i pg # for PostgreSQL
+npm i mysql2 # for MySQL
+```
+
+**If you use PostgreSQL(ESM)**:
+``` js
+import { Pool } from "pg";
+
+const postgresPool = new Pool({
+	host: dbHost,
+	user: dbUser,
+	password: dbPassword,
+	database: dbName,
+	port: dbPort,
+	ssl: dbSsl === "true" ? { rejectUnauthorized: false } : false,
+});
+```
+
+**If you use PostgreSQL(CJS)**:
+``` js
+const { Pool } = require("pg");
+
+const postgresPool = new Pool({
+	host: dbHost,
+	user: dbUser,
+	password: dbPassword,
+	database: dbName,
+	port: dbPort,
+	ssl: dbSsl === "true" ? { rejectUnauthorized: false } : false,
+});
+```
+
+**If you use MySQL(ESM)**:
+``` js
+import mysql from "mysql2/promise";
+
+const mySqlPool = mysql.createPool({
+	host: dbHost,
+	user: dbUser,
+	password: dbPassword,
+	database: dbName,
+	port: dbPort,
+});
+```
+
+**If you use MySQL(CJS)**:
+``` js
+const mysql = require("mysql2/promise");
+
+const mySqlPool = mysql.createPool({
+	host: dbHost,
+	user: dbUser,
+	password: dbPassword,
+	database: dbName,
+	port: dbPort,
+});
+```
 
 ---
 
@@ -73,9 +157,10 @@ You need to initialize the database client based on the environment configuratio
 
 ```javascript
 import { MySQLClient, PostgresClient, Database } from 'livesey-database';
+import { mySqlPool, postgresPool } from './dbConfig.js';
 
 // Determine the database client type based on the environment configuration
-const dbClient = process.env.DB_TYPE === 'mysql' ? new MySQLClient() : new PostgresClient();
+const dbClient = process.env.DB_TYPE === 'mysql' ? new MySQLClient(mySqlPool) : new PostgresClient(postgresPool);
 ```
 
 ### 2. Schema Creation and Serialization
@@ -250,10 +335,11 @@ Implements the `DatabaseClient` interface for MySQL databases.
 
 #### Constructor
 
--  `new MySQLClient()`
+-  `new MySQLClient(mySqlPool)`
 
 #### Methods
 
+-  `newMySQLClient(mySqlPool)` : Allows to use client like: `MySQLClient.newMySQLClient(mySqlPool)`.
 -  `async connect()` : Returns a MySQL connection from the pool.
 -  `async query(queryText, params)` : Executes a SQL query using MySQL connection.
 -  `release()` : Ends all connections in the MySQL pool.
@@ -264,10 +350,11 @@ Implements the `DatabaseClient` interface for PostgreSQL databases.
 
 #### Constructor
 
--  `new PostgresClient()`
+-  `new PostgresClient(postgresPool)`
 
 #### Methods
 
+-  `newPostgresClient(postgresPool)` : Allows to use client like: `PostgresClient.newPostgresClient(postgresPool)`.
 -  `async connect()` : Returns a PostgreSQL connection from the pool.
 -  `async query(queryText, params)` : Executes a SQL query using PostgreSQL connection.
 -  `release()` : Ends all connections in the PostgreSQL pool.

@@ -1,31 +1,35 @@
-import mysql from 'mysql2/promise';
-import pkg from 'pg';
-const { Pool } = pkg;
-import dotenv from 'dotenv';
+const mysql = require("mysql2/promise");
+const { Pool } = require("pg");
+const dotenv = require("dotenv");
 dotenv.config();
 
-export const port = process.env.PORT;
-export const dbType = process.env.DB_TYPE;
-export const dbHost = process.env.DB_HOST;
-export const dbUser = process.env.DB_USER;
-export const dbPassword = process.env.DB_PASSWORD;
-export const dbName = process.env.DB_NAME;
-export const dbPort = process.env.DB_PORT;
-export const dbSsl = process.env.DB_SSL;
+const dbType = process.env.DB_TYPE;
+const dbHost = process.env.DB_HOST;
+const dbUser = process.env.DB_USER;
+const dbPassword = process.env.DB_PASSWORD;
+const dbName = process.env.DB_NAME;
+const dbPort = process.env.DB_PORT;
+const dbSsl = process.env.DB_SSL;
 
-export const mySqlPool = mysql.createPool({
-  host: dbHost,
-  user: dbUser,
-  password: dbPassword,
-  database: dbName,
-  port: dbPort,
+const mySqlPool = mysql.createPool({
+	host: dbHost,
+	user: dbUser,
+	password: dbPassword,
+	database: dbName,
+	port: dbPort,
 });
 
-export const postgresPool = new Pool({
-  host: dbHost,
-  user: dbUser,
-  password: dbPassword,
-  database: dbName,
-  port: dbPort,
-  ssl: dbSsl === 'true' ? { rejectUnauthorized: false } : false,
+const postgresPool = new Pool({
+	host: dbHost,
+	user: dbUser,
+	password: dbPassword,
+	database: dbName,
+	port: dbPort,
+	ssl: dbSsl === "true" ? { rejectUnauthorized: false } : false,
 });
+
+module.exports = {
+	dbType,
+	mySqlPool,
+	postgresPool,
+};
