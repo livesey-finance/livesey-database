@@ -405,76 +405,7 @@ Creates a table from schema(json object).
 
 ---
 
-## Tests
-
-You can test this module using tests in `src/test` folder. Here is the structure:
-```sh
-tests
-├── connection.test.js
-├── database.test.js
-├── envConfig.js
-├── functions.test.js
-├── indexes.test.js
-└── serializer.test.js
-
-1 directory, 6 files
-```
-
-If you want to run tests on your local machine, you have to follow these steps:
-
-1. Install and configure environmental variables
-
-You have to install `dotenv` package via NPM:
-``` sh
-npm i dotenv
-```
-
-Create `.env` file and put there these variables(you can put more if you want to use additional functionality in pools):
-
-```env
-DB_TYPE=mysql # or postgres
-DB_HOST=#your host
-DB_USER=#your username
-DB_PASSWORD=#your password
-DB_NAME= #your database name
-DB_PORT=3306 # for MySQL or 5432 for PostgreSQL
-DB_SSL=true # or false for non-SSL connections
-```
-
-2. You have to install pg or mysql2 package via NPM:
-
-``` sh
-npm i pg # for PostgreSQL
-npm i mysql2 # for MySQL
-```
-
-3. All tests in `src/tests` are wrapped in quotes as comments - uncomment it
-
-4. Use `npm run test` to start tests
-
-You can find this block of code in `package.json`:
-
-```json
-"scripts": {
-		"lint": "npx biome format . --write",
-		"test": "node --test tests/*.test.js"
-	}
-```
-
-So, if you want to correct syntax in test or in new code, you have to run `npm run lint command`.
-
-5. Happy testing👩‍💻
-
-
----
-
-## Contributing
-
-Contributions are welcome! Please submit a pull request or open an issue on the GitHub repository.
-
----
-
-## Indexes
+### `Indexes`
 
 Indexes are a crucial part of database optimization, improving the performance of queries by allowing faster data retrieval. The `livesey-database` package provides utility functions to create, manage, and delete indexes in both MySQL and PostgreSQL databases. 
 
@@ -551,6 +482,75 @@ await dropIndex('User', dbClient, 'postgres', 'User_email_idx');
 ```
 
 This command will drop the index named `User_email_idx` from the `User` table in a PostgreSQL database.
+
+---
+
+## Tests
+
+You can test this module using tests in `src/test` folder. Here is the structure:
+```sh
+tests
+├── connection.test.js
+├── database.test.js
+├── envConfig.js
+├── functions.test.js
+├── indexes.test.js
+└── serializer.test.js
+
+1 directory, 6 files
+```
+
+If you want to run tests on your local machine, you have to follow these steps:
+
+1. Install and configure environmental variables
+
+You have to install `dotenv` package via NPM:
+``` sh
+npm i dotenv
+```
+
+Create `.env` file and put there these variables(you can put more if you want to use additional functionality in pools):
+
+```env
+DB_TYPE=mysql # or postgres
+DB_HOST=#your host
+DB_USER=#your username
+DB_PASSWORD=#your password
+DB_NAME= #your database name
+DB_PORT=3306 # for MySQL or 5432 for PostgreSQL
+DB_SSL=true # or false for non-SSL connections
+```
+
+2. You have to install pg or mysql2 package via NPM:
+
+``` sh
+npm i pg # for PostgreSQL
+npm i mysql2 # for MySQL
+```
+
+3. All tests in `src/tests` are wrapped in quotes as comments - uncomment it
+
+4. Use `npm run test` to start tests
+
+You can find this block of code in `package.json`:
+
+```json
+"scripts": {
+		"lint": "npx biome format . --write",
+		"test": "node --test tests/*.test.js"
+	}
+```
+
+So, if you want to correct syntax in test or in new code, you have to run `npm run lint command`.
+
+5. Happy testing👩‍💻
+
+
+---
+
+## Contributing
+
+Contributions are welcome! Please submit a pull request or open an issue on the GitHub repository.
 
 ---
 
