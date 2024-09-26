@@ -1,6 +1,7 @@
 {
 	"name": "livesey-database",
-	"version": "1.1.0",
+	"author": "Heorhii Huziuk <huziukwork@gmail.com>",
+	"version": "1.1.1",
 	"description": "a lightweight module that allows you to work with database queries without using ORM",
 	"main": "index.js",
 	"module": "wrapper.mjs",
@@ -16,10 +17,13 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/livesey-finance/livesey-database"
+		"url": "https://github.com/livesey-finance/livesey-database"
 	},
+	"bugs": {
+		"url": "https://github.com/livesey-finance/livesey-database/issues"
+	},
+	"types": "src/types/*.d.ts",
 	"keywords": ["orm", "database", "javascript", "postgres", "pg", "mysql"],
-	"author": "hhuziuk",
 	"license": "MIT",
 	"devDependencies": {
 		"@biomejs/biome": "1.9.2"

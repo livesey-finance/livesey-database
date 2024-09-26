@@ -191,7 +191,6 @@ const createSchema = async (dbClient, schemas, dbType) => {
 	}
 };
 
-
 module.exports = {
 	createSchema,
 };

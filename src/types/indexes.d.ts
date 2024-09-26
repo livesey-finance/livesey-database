@@ -1,24 +1,24 @@
-import { DatabaseClient } from './databaseClient';
+import { DatabaseClient } from "./databaseClient";
 
-type DBType = 'postgres' | 'mysql';
+type DBType = "postgres" | "mysql";
 
 export declare function createIndex(
-  tableName: string,
-  dbClient: DatabaseClient,
-  dbType: DBType,
-  ...columns: string[]
+	tableName: string,
+	dbClient: DatabaseClient,
+	dbType: DBType,
+	...columns: string[]
 ): Promise<void>;
 
 export declare function createUniqueIndex(
-  tableName: string,
-  dbClient: DatabaseClient,
-  dbType: DBType,
-  ...columns: string[]
+	tableName: string,
+	dbClient: DatabaseClient,
+	dbType: DBType,
+	...columns: string[]
 ): Promise<void>;
 
 export declare function dropIndex(
-  tableName: string,
-  dbClient: DatabaseClient,
-  dbType: DBType,
-  indexName: string
+	tableName: string,
+	dbClient: DatabaseClient,
+	dbType: DBType,
+	indexName: string,
 ): Promise<void>;
