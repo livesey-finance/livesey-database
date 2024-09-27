@@ -528,9 +528,7 @@ npm i pg # for PostgreSQL
 npm i mysql2 # for MySQL
 ```
 
-3. **All tests in `src/tests` are wrapped in quotes as comments - uncomment it**
-
-4. **Use `npm run test` to start tests**
+3. **Use `npm run test` to start tests**
 
 You can find this block of code in `package.json`:
 
@@ -541,9 +539,9 @@ You can find this block of code in `package.json`:
 	}
 ```
 
-So, if you want to correct syntax in test or in new code, you have to run `npm run lint command`.
+So, if you want to correct syntax in test or in new code, you have to run `npm run lint` command.
 
-5. **Happy testing 👩‍💻**
+4. **Happy testing 👩‍💻**
 
 
 ---
