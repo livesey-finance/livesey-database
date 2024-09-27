@@ -23,13 +23,19 @@
 		"url": "https://github.com/livesey-finance/livesey-database/issues"
 	},
 	"types": "src/types/*.d.ts",
-	"keywords": ["orm", "database", "javascript", "postgres", "pg", "mysql"],
+	"keywords": [
+		"orm",
+		"database",
+		"javascript",
+		"postgres",
+		"pg",
+		"mysql"
+	],
 	"license": "MIT",
 	"devDependencies": {
 		"@biomejs/biome": "1.9.2"
 	},
 	"dependencies": {
-		"dotenv": "^16.4.5",
 		"livesey-validation": "^1.0.1"
 	}
 }
