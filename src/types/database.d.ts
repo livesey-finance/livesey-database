@@ -6,8 +6,7 @@ type DBType = "postgres" | "mysql";
 
 export class Database {
 	constructor(tableName: string, dbClient: DBClient, dbType: DBType);
-	formatColumnName(column: string): string;
-	formatTableName(): string;
+	formatName(column: string): string;
 	formatPlaceholder(index: number): string;
 	select(fields?: string[]): this;
 	where(object: Record<string, any>): this;

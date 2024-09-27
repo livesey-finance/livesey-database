@@ -36,9 +36,13 @@ const createTable = (schema, dbType) => {
 			if (!Array.isArray(columnValue.enum) || columnValue.enum.length === 0) {
 				throw new Error(`Invalid enum definition for column "${columnName}".`);
 			}
-			const enumValues = columnValue.enum
-				.map((value) => `'${value}'`)
-				.join(", ");
+
+			const enumValuesArray = [];
+			for (const enumeration of columnValue.enum) {
+				enumValuesArray.push(`'${enumeration}'`);
+			}
+			const enumValues = enumValuesArray.join(", ");
+
 			query += ` CHECK (${dbType === "postgres" ? `"${columnName}"` : `\`${columnName}\``} IN (${enumValues}))`;
 		}
 
@@ -66,9 +70,12 @@ const addRelations = (schema, allSchemas, dbType) => {
 
 	// ManyToOne
 	if (relations.ManyToOne) {
-		const manyToOneRelations = Array.isArray(relations.ManyToOne)
-			? relations.ManyToOne
-			: [relations.ManyToOne];
+		let manyToOneRelations;
+		if (Array.isArray(relations.ManyToOne)) {
+			manyToOneRelations = relations.ManyToOne;
+		} else {
+			manyToOneRelations = [relations.ManyToOne];
+		}
 
 		for (const relationParams of manyToOneRelations) {
 			const query = `ALTER TABLE ${dbType === "postgres" ? `"${tableName}"` : `\`${tableName}\``}
@@ -81,9 +88,12 @@ const addRelations = (schema, allSchemas, dbType) => {
 
 	// OneToMany
 	if (relations.OneToMany) {
-		const oneToManyRelations = Array.isArray(relations.OneToMany)
-			? relations.OneToMany
-			: [relations.OneToMany];
+		let oneToManyRelations;
+		if (Array.isArray(relations.OneToMany)) {
+			oneToManyRelations = relations.OneToMany;
+		} else {
+			oneToManyRelations = [relations.OneToMany];
+		}
 
 		for (const relationParams of oneToManyRelations) {
 			const query = `ALTER TABLE ${dbType === "postgres" ? `"${relationParams.relatedEntity}"` : `\`${relationParams.relatedEntity}\``}
@@ -96,9 +106,12 @@ const addRelations = (schema, allSchemas, dbType) => {
 
 	// OneToOne
 	if (relations.OneToOne) {
-		const oneToOneRelations = Array.isArray(relations.OneToOne)
-			? relations.OneToOne
-			: [relations.OneToOne];
+		let oneToOneRelations;
+		if (Array.isArray(relations.OneToOne)) {
+			oneToOneRelations = relations.OneToOne;
+		} else {
+			oneToOneRelations = [relations.OneToOne];
+		}
 
 		for (const relationParams of oneToOneRelations) {
 			const query = `ALTER TABLE ${dbType === "postgres" ? `"${tableName}"` : `\`${tableName}\``} 
@@ -151,29 +164,34 @@ const addRelations = (schema, allSchemas, dbType) => {
 const createSchema = async (dbClient, schemas, dbType) => {
 	for (const schema of schemas) {
 		const tableName = schema.Table.tableName;
-
-		const tableExistsQuery =
-			dbType === "postgres"
-				? `
+		const postgresQuery = `
         SELECT EXISTS (
           SELECT 1 
           FROM information_schema.tables 
           WHERE table_schema = 'public' 
           AND table_name = $1
         );
-      `
-				: `
+       `;
+		const mySqlQuery = `
         SELECT COUNT(*) AS count 
         FROM information_schema.tables 
         WHERE table_name = ?;
       `;
+		let tableExistsQuery = "";
+		if (dbType === "postgres") {
+			tableExistsQuery = postgresQuery;
+		} else {
+			tableExistsQuery = mySqlQuery;
+		}
 
 		const result = await dbClient.query(tableExistsQuery, [tableName]);
 
-		const tableExists =
-			dbType === "postgres"
-				? result?.rows?.[0]?.exists || false
-				: result?.[0]?.count > 0;
+		let tableExists = null;
+		if (dbType === "postgres") {
+			tableExists = result?.rows?.[0]?.exists || false;
+		} else {
+			tableExistsQuery = result?.[0]?.count > 0;
+		}
 
 		if (!tableExists) {
 			const createTableQuery = createTable(schema, dbType);

@@ -11,7 +11,7 @@ class Database {
 		this.query = "";
 		this.whereValues = [];
 	}
-	
+
 	formatName(name) {
 		if (this.dbType === "postgres") {
 			return `"${name}"`;
@@ -21,10 +21,10 @@ class Database {
 	}
 
 	formatPlaceholder(index) {
-		if(this.dbType === "postgres"){
+		if (this.dbType === "postgres") {
 			return `$${index + 1}`;
 		} else {
-			return  "?";
+			return "?";
 		}
 	}
 
@@ -49,11 +49,19 @@ class Database {
 			const whereValues = [];
 
 			for (const [key, condition] of Object.entries(object)) {
-				const operator = (typeof condition === "object" && condition?.operator) ? condition.operator : "=";
-				const value = (typeof condition === "object" && condition?.value != null) ? condition.value : condition;
-				whereConditions.push(`${this.formatName(key)} ${operator} ${this.formatPlaceholder(this.whereValues.length + whereValues.length)}`);
+				const operator =
+					typeof condition === "object" && condition?.operator
+						? condition.operator
+						: "=";
+				const value =
+					typeof condition === "object" && condition?.value != null
+						? condition.value
+						: condition;
+				whereConditions.push(
+					`${this.formatName(key)} ${operator} ${this.formatPlaceholder(this.whereValues.length + whereValues.length)}`,
+				);
 				whereValues.push(value);
-			}			  
+			}
 
 			this.query += ` WHERE ${whereConditions.join(" AND ")}`;
 			this.whereValues = this.whereValues.concat(whereValues);
@@ -106,7 +114,9 @@ class Database {
 		let index = 0;
 
 		for (const key of Object.keys(object)) {
-			setClauses.push(`${this.formatName(key)} = ${this.formatPlaceholder(this.whereValues.length + index++)}`);
+			setClauses.push(
+				`${this.formatName(key)} = ${this.formatPlaceholder(this.whereValues.length + index++)}`,
+			);
 		}
 		this.query += ` SET ${setClauses.join(", ")}`;
 		this.whereValues = this.whereValues.concat(Object.values(object));

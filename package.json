@@ -1,7 +1,7 @@
 {
 	"name": "livesey-database",
 	"author": "Heorhii Huziuk <huziukwork@gmail.com>",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"description": "a lightweight module that allows you to work with database queries without using ORM",
 	"main": "index.js",
 	"module": "wrapper.mjs",
