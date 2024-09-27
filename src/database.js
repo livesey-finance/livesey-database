@@ -11,19 +11,21 @@ class Database {
 		this.query = "";
 		this.whereValues = [];
 	}
-
-	formatColumnName(column) {
-		return this.dbType === "postgres" ? `"${column}"` : `\`${column}\``;
-	}
-
-	formatTableName() {
-		return this.dbType === "postgres"
-			? `"${this.tableName}"`
-			: `\`${this.tableName}\``;
+	
+	formatName(name) {
+		if (this.dbType === "postgres") {
+			return `"${name}"`;
+		} else {
+			return `\`${name}\``;
+		}
 	}
 
 	formatPlaceholder(index) {
-		return this.dbType === "postgres" ? `$${index + 1}` : "?";
+		if(this.dbType === "postgres"){
+			return `$${index + 1}`;
+		} else {
+			return  "?";
+		}
 	}
 
 	select(fields) {
@@ -31,13 +33,13 @@ class Database {
 		if (fields) {
 			const selectedFields = [];
 			for (const key of fields) {
-				selectedFields.push(this.formatColumnName(key));
+				selectedFields.push(this.formatName(key));
 			}
 			field = selectedFields.join(", ");
 		} else {
 			field = "*";
 		}
-		this.query += `SELECT ${field} FROM ${this.formatTableName()}`;
+		this.query += `SELECT ${field} FROM ${this.formatName(this.tableName)}`;
 		return this;
 	}
 
@@ -47,23 +49,11 @@ class Database {
 			const whereValues = [];
 
 			for (const [key, condition] of Object.entries(object)) {
-				if (
-					typeof condition === "object" &&
-					condition.operator &&
-					condition.value !== undefined
-				) {
-					whereConditions.push(
-						`${this.formatColumnName(key)} ${condition.operator} ` +
-							`${this.formatPlaceholder(this.whereValues.length + whereValues.length)}`,
-					);
-					whereValues.push(condition.value);
-				} else {
-					whereConditions.push(
-						`${this.formatColumnName(key)} = ${this.formatPlaceholder(this.whereValues.length + whereValues.length)}`,
-					);
-					whereValues.push(condition);
-				}
-			}
+				const operator = (typeof condition === "object" && condition?.operator) ? condition.operator : "=";
+				const value = (typeof condition === "object" && condition?.value != null) ? condition.value : condition;
+				whereConditions.push(`${this.formatName(key)} ${operator} ${this.formatPlaceholder(this.whereValues.length + whereValues.length)}`);
+				whereValues.push(value);
+			}			  
 
 			this.query += ` WHERE ${whereConditions.join(" AND ")}`;
 			this.whereValues = this.whereValues.concat(whereValues);
@@ -82,12 +72,12 @@ class Database {
 		}
 		let formattedColumns = "";
 		for (const col of columns) {
-			formattedColumns += this.formatColumnName(col) + ", ";
+			formattedColumns += this.formatName(col) + ", ";
 		}
 
 		formattedColumns = formattedColumns.slice(0, -2);
 
-		this.query += ` INTO ${this.formatTableName()} (${formattedColumns})`;
+		this.query += ` INTO ${this.formatName(this.tableName)} (${formattedColumns})`;
 		return this;
 	}
 
@@ -107,7 +97,7 @@ class Database {
 	}
 
 	update() {
-		this.query += `UPDATE ${this.formatTableName()}`;
+		this.query += `UPDATE ${this.formatName(this.tableName)}`;
 		return this;
 	}
 
@@ -116,10 +106,7 @@ class Database {
 		let index = 0;
 
 		for (const key of Object.keys(object)) {
-			setClauses.push(
-				`${this.formatColumnName(key)} = ${this.formatPlaceholder(this.whereValues.length + index)}`,
-			);
-			index++;
+			setClauses.push(`${this.formatName(key)} = ${this.formatPlaceholder(this.whereValues.length + index++)}`);
 		}
 		this.query += ` SET ${setClauses.join(", ")}`;
 		this.whereValues = this.whereValues.concat(Object.values(object));
@@ -127,7 +114,7 @@ class Database {
 	}
 
 	delete() {
-		this.query += `DELETE FROM ${this.formatTableName()}`;
+		this.query += `DELETE FROM ${this.formatName(this.tableName)}`;
 		return this;
 	}
 

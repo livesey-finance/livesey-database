@@ -7,13 +7,13 @@ const { DatabaseFunction } = require("../src/functions.js");
 let dbClient;
 
 before(async () => {
-	dbClient =
-		dbType === "postgres"
-			? new PostgresClient(postgresPool)
-			: new MySQLClient(mySqlPool);
+	if (dbType === "postgres") {
+		dbClient = new PostgresClient(postgresPool);
+	} else {
+		dbClient = new MySQLClient(mySqlPool);
+	}
 
 	try {
-		// Створення таблиці employees
 		await dbClient.query(`
       CREATE TABLE IF NOT EXISTS employees (
         id SERIAL PRIMARY KEY,
